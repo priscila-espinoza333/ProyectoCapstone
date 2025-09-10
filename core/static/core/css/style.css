@@ -1,0 +1,443 @@
+/* GENERAL  */
+body {
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* NAVBAR  */
+.navbar {
+    padding: 1rem 2rem;
+    background-color: #1c1c1c !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.navbar-brand img {
+    height: 50px;
+    transition: transform 0.3s ease;
+}
+
+.navbar-brand img:hover {
+    transform: scale(1.05);
+}
+
+.navbar-nav .nav-link {
+    color: #dcdcdc;
+    font-weight: 500;
+    margin: 0 12px;
+    transition: color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    color: #ffc72c; /* dorado del logo */
+}
+
+/*  NAVBAR REGISTRO Y LOGIN  */
+.nav-register {
+    color: #ffc72c !important; /* dorado */
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.nav-register:hover {
+    color: #e6b800 !important; /* dorado más oscuro al pasar el mouse */
+}
+
+.nav-login {
+    color: #7674ee !important; /* blanco */
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.nav-login:hover {
+    color: #dcdcdc !important; /* gris claro en hover */
+}
+
+/* REGÍSTRATE destacado en dorado */
+.navbar-nav .nav-link.text-info {
+    color: #ffc72c !important;
+    font-weight: bold;
+}
+
+/* LOGIN en blanco */
+.navbar-nav .nav-link.text-light {
+    color: #19d0dd !important;
+}
+
+/* Alineación entre menú y login/registro */
+.navbar-collapse {
+    align-items: center;
+}
+
+/*  ESTILO TÍTULO MATCHPLAY  */
+.brand-title {
+    font-weight: bold;
+    font-size: 3rem; /* ajusta el tamaño según prefieras */
+    letter-spacing: 2px; /* un poco de separación entre letras */
+}
+
+.brand-match {
+    color: #ffc72c; /* dorado */
+}
+
+.brand-play {
+    color: #6a0dad; /* morado */
+}
+
+/* TITLE SECTION */
+.hero-title {
+    background: #f8f9fa; /* gris muy claro, elegante */
+    padding: 2rem 0; /* menos espacio vertical */
+    margin-bottom: 0; /* elimina separación extra con el carrusel */
+    border-bottom: 1px solid #e0e0e0; /* línea sutil para separar */
+}
+
+.brand-title {
+    font-weight: 800;
+    font-size: 2.5rem; /* más compacto */
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+}
+
+.hero-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d; /* gris medio */
+    margin: 0;
+}
+
+/*  CARRUSEL */
+#carouselPromos img {
+    max-height: 500px;
+    object-fit: cover;
+}
+
+/* SPLIT GYM SECTION */
+.split-gym-content {
+    background-color: #ffc72c; /* dorado */
+    color: #ffffff;
+}
+
+.section-subtitle {
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.section-title {
+    font-weight: 800;
+    font-size: 2rem;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.section-title .highlight {
+    color: #6a0dad; /* morado branding */
+}
+
+.gym-features {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.gym-features li {
+    margin-bottom: 0.8rem;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.gym-features i {
+    color: #6a0dad; /* íconos en morado */
+    font-size: 1.2rem;
+    margin-right: 10px;
+}
+
+/* Botón personalizado */
+.btn-gold {
+    background-color: #6a0dad;
+    color: #fff;
+    font-weight: bold;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    transition: all 0.3s ease;
+    border-radius: 30px;
+}
+
+.btn-gold:hover {
+    background-color: #fff;
+    color: #6a0dad;
+    border: 2px solid #6a0dad;
+}
+/* Section heading */
+.section-classes {
+  background: #f7f8fa;
+}
+.section-heading {
+  font-weight: 800;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.section-heading span {
+  color: #6a0dad; /* morado marca */
+}
+
+/* Cards */
+.class-card {
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06);
+  display: flex;
+  flex-direction: column;
+  transition: transform .25s ease, box-shadow .25s ease;
+  position: relative;
+  overflow: hidden;
+}
+.class-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0,0,0,.12);
+}
+
+/* Badge superior (categoría) */
+.class-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  font-size: .85rem;
+  font-weight: 700;
+  padding: .35rem .65rem;
+  border-radius: 999px;
+  color: #1c1c1c;
+  background: #f1f3f5;
+  border: 1px solid #e3e6ea;
+}
+.badge-gold   { background: #ffe59a; border-color: #ffd66e; }
+.badge-green  { background: #d4f7df; border-color: #baf0cb; }
+.badge-purple { background: #e6d4ff; border-color: #d3b9ff; color:#3d2070; }
+
+/* Body */
+.class-body {
+  padding: 2.5rem 1.25rem 1.25rem 1.25rem;
+  margin-top: .5rem; /* deja espacio al badge */
+}
+.class-title {
+  font-size: 1.65rem;
+  font-weight: 800;
+  text-transform: capitalize;
+  margin-bottom: .5rem;
+}
+.class-text {
+  color: #495057;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Footer */
+.class-footer {
+  padding: 1.25rem;
+  margin-top: auto; /* empuja el footer al fondo de la card */
+  border-top: 1px solid #f1f3f5;
+  display: flex;
+  justify-content: center;
+}
+
+/* Botón redondeado */
+.btn-pill {
+  border-radius: 999px;
+  padding: .5rem 1.25rem;
+  font-weight: 700;
+}
+
+/* Ajustes responsivos */
+@media (max-width: 991.98px) {
+  .class-title { font-size: 1.4rem; }
+}
+@media (max-width: 575.98px) {
+  .class-body { padding: 2rem 1rem 1rem; }
+  .class-badge { top: 10px; left: 10px; }
+}
+
+/* TESTIMONIOS */
+/* === Testimonials === */
+.testimonials {
+  background: #f8f9fa;
+}
+
+.section-heading {
+  font-weight: 800;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.section-heading span { color: #6a0dad; }
+
+/* Card */
+.t-card {
+  position: relative;
+  background: #fff;
+  border: 1px solid #eef0f2;
+  border-left: 6px solid #ffc72c;       /* acento dorado */
+  border-radius: 14px;
+  padding: 1.25rem 1.25rem 1.5rem;
+  box-shadow: 0 8px 22px rgba(0,0,0,.06);
+  margin: 0;
+}
+
+/* Encabezado con avatar */
+.t-header {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  margin-bottom: .75rem;
+}
+.t-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #ffc72c;        /* aro dorado */
+}
+.t-name {
+  font-weight: 700;
+  line-height: 1;
+}
+.t-meta {
+  font-size: .85rem;
+  color: #6c757d;
+}
+
+/* Cita con comillas doradas */
+.t-quote {
+  position: relative;
+  margin: .25rem 0 0;
+  font-size: 1.05rem;
+  color: #2b2f33;
+  line-height: 1.6;
+  font-style: italic;
+  padding-left: 1.4rem;
+}
+.t-quote::before {
+  content: "“";
+  position: absolute;
+  left: 0; top: -.35rem;
+  color: #ffc72c;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+/* Responsive tweaks */
+@media (max-width: 575.98px) {
+  .t-card { padding: 1rem 1rem 1.2rem; }
+  .t-quote { font-size: 1rem; }
+}
+
+
+/* STATS */
+.stats-section {
+  background: linear-gradient(135deg, #2d2144 0%, #6a0dad 40%, #ffc72c 140%);
+}
+
+.stats-title {
+  font-weight: 800;
+  letter-spacing: .5px;
+  text-transform: none;
+}
+
+.stat-item{
+  max-width: 320px;
+  margin-inline: auto;
+}
+
+.stat-icon{
+  width:72px; height:72px;
+  margin: 0 auto 12px auto;
+  border-radius: 50%;
+  display:flex; align-items:center; justify-content:center;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.25);
+  backdrop-filter: blur(2px);
+}
+.stat-icon i{
+  font-size: 2rem;
+  color:#fff;
+}
+
+.stat-number{
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: .25rem;
+}
+.stat-number::before{
+  content: attr(data-prefix);
+}
+.stat-label{
+  margin:0;
+  color: #e9ecef;
+  font-size: 1rem;
+}
+
+/* Ajustes responsivos */
+@media (max-width: 575.98px){
+  .stat-number{ font-size: 2.1rem; }
+  .stats-section{ padding: 3.5rem 0; }
+}
+.stats-section {
+  background: linear-gradient(135deg, #2d2144 0%, #6a0dad 40%, #ffc72c 140%);
+  color: #fff;
+  padding: 5rem 0 4rem; /* más espacio arriba y abajo */
+}
+
+.stats-title {
+  font-weight: 800;
+  letter-spacing: .5px;
+  text-transform: none;
+  margin-bottom: 3rem; /* separa el título de los iconos */
+  color: #fff;
+}
+
+
+/* FOOTER */
+.footer {
+  background: #1c1c1c;
+  position: relative;
+}
+
+.footer-brand {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffc72c; /* dorado */
+  margin-bottom: 1rem;
+}
+
+.footer-contact li {
+  margin-bottom: .5rem;
+  color: #ccc;
+  font-size: .95rem;
+}
+.footer-contact i {
+  color: #ffc72c;
+  margin-right: .5rem;
+}
+
+/* Social icons */
+.footer-social a {
+  display: inline-block;
+  margin-left: .8rem;
+  font-size: 1.4rem;
+  color: #fff;
+  transition: color .3s ease;
+}
+.footer-social a:hover {
+  color: #ffc72c; /* dorado en hover */
+}
+
+/* Bottom bar */
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,.1);
+  font-size: .85rem;
+  color: #aaa;
+}
+
