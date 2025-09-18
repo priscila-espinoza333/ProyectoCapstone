@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Resumen de reserva{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+  <div class="text-center mb-4">
+    <h1 class="brand-title">
+      <span class="brand-match">RESUMEN</span> <span class="brand-play">RESERVA</span>
+    </h1>
+    <p class="text-muted m-0">Confirma los datos antes de finalizar.</p>
+  </div>
+
+  <div class="card card-resumen shadow-sm border-0">
+    <div class="card-body">
+      <div class="resumen-header">
+        <div class="resumen-cancha">
+          <h5 class="mb-1">{{ reserva.cancha }}</h5>
+          <div class="text-muted small">
+            {{ reserva.cancha.recinto.nombre }} · {{ reserva.cancha.recinto.direccion }}
+          </div>
+          <div class="resumen-badges">
+            <span class="badge badge-gold">{{ reserva.estado }}</span>
+            <span class="badge badge-purple">{{ reserva.cancha.get_deporte_display }}</span>
+          </div>
+        </div>
+        <div class="resumen-precio">
+          <div class="precio-total">${{ reserva.precio_total|floatformat:0 }}</div>
+          <div class="precio-label text-muted">valor total</div>
+        </div>
+      </div>
+
+      <hr class="divider-soft">
+
+      <div class="resumen-grid">
+        <div class="resumen-box">
+          <div class="label-soft">Inicio</div>
+          <div class="value-strong">{{ reserva.fecha_hora_inicio|date:"d/m/Y H:i" }}</div>
+        </div>
+        <div class="resumen-box">
+          <div class="label-soft">Término</div>
+          <div class="value-strong">{{ reserva.fecha_hora_fin|date:"d/m/Y H:i" }}</div>
+        </div>
+      </div>
+
+      <div class="resumen-contacto">
+        <div class="label-soft mb-2">Contacto</div>
+        <div class="contacto-grid">
+          <div><span class="contacto-label">Nombre:</span> {{ reserva.nombre_contacto|default:"-" }}</div>
+          <div><span class="contacto-label">Teléfono:</span> {{ reserva.telefono_contacto|default:"-" }}</div>
+          <div><span class="contacto-label">Email:</span> {{ reserva.email_contacto|default:"-" }}</div>
+        </div>
+      </div>
+
+      <div class="resumen-actions">
+        <a class="btn btn-outline-secondary" href="{% url 'cancha_detalle' reserva.cancha.id %}">Volver</a>
+        <a class="btn btn-gold" href="{% url 'reservas_confirmar' reserva.id %}">Confirmar</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

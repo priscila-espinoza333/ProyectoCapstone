@@ -1,0 +1,60 @@
+{% extends "core/base.html" %}
+{% block title %}Tipos de Canchas{% endblock %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+  <h1 class="text-center mb-4">Tipos de Canchas Disponibles</h1>
+
+  <div class="row g-4">
+    <!-- Fútbol -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Fútbol</h5>
+          <p class="card-text">Canchas de fútbol 5 y 7.</p>
+          <a href="{% url 'canchas_por_deporte' 'futbol' %}" class="btn btn-sm btn-outline-primary">Ver Canchas</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tenis -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Tenis</h5>
+          <p class="card-text">Rápidas y de arcilla.</p>
+          <a href="{% url 'canchas_por_deporte' 'tenis' %}" class="btn btn-sm btn-outline-primary">Ver Canchas</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pádel -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Pádel</h5>
+          <p class="card-text">Dobles con muros de vidrio.</p>
+          <a href="{% url 'canchas_por_deporte' 'padel' %}" class="btn btn-sm btn-outline-primary">Ver Canchas</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Básquetbol -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Básquetbol</h5>
+          <p class="card-text">Techadas y abiertas.</p>
+          <a href="{% url 'canchas_por_deporte' 'basquetbol' %}" class="btn btn-sm btn-outline-primary">Ver Canchas</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Link al listado completo -->
+  <div class="text-center mt-4">
+    <a href="{% url 'canchas' %}" class="btn btn-warning">Ver todas</a>
+  </div>
+</div>
+{% endblock %}

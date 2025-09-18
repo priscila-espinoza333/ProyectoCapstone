@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Acción no disponible{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <div class="card card-error shadow-sm border-0 mx-auto">
+    <div class="card-body">
+      <div class="icon-warning"><i class="bi bi-exclamation-octagon-fill"></i></div>
+      <h2 class="brand-title mb-2">
+        <span class="brand-match">{{ titulo|default:"ACCIÓN" }}</span>
+        <span class="brand-play">NO DISPONIBLE</span>
+      </h2>
+      <p class="text-muted">{{ mensaje|default:"La operación no puede realizarse en este momento." }}</p>
+      <div class="d-flex gap-2 justify-content-center mt-3">
+        <a href="{% url 'mis_reservas' %}" class="btn btn-gold">Ir a mis reservas</a>
+        <a href="{% url 'canchas' %}" class="btn btn-outline-secondary">Ver canchas</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

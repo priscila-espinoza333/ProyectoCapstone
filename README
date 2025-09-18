@@ -1,0 +1,23 @@
+# ReservaFútbol MatchPlay 
+Plataforma web para el arriendo de canchas deportivas.
+
+## Descripción
+Este proyecto corresponde al **APT (Capstone) de Ingeniería en Informática**.  
+La solución busca digitalizar el proceso de reservas, evitando problemas como dobles agendamientos, pérdida de datos y baja trazabilidad.
+
+## Equipo
+- Priscila Espinoza 
+- Lucas Castillo
+- Catalina Riveros
+- Luis Montes
+
+## Tecnologías
+- **Backend:** Django 5, Python 3.12  
+- **Frontend:** Bootstrap 5, HTML5, CSS3  
+- **Base de Datos:** MySQL  
+- **Control de versiones:** Git + GitHub  
+- **Metodología:** Ágil (Scrum/Kanban)  
+
+
+## Para descargar dependencias necesarias
+pip install -r requirements.txt 

@@ -1,0 +1,19 @@
+[
+  {
+    "model": "core.recinto",
+    "pk": 1,
+    "fields": {
+      "nombre": "MatchPlay",
+      "direccion": "Av. Deportiva 1234 Santiago",
+      "comuna": "Santiago",
+      "telefono": "+56 9 1234 5678",
+      "email": "recintodeportivomatchplay@gmail.com",
+      "url_maps": "https://maps.google.com/?q=-33.5943,-70.7041",
+      "hora_apertura": "08:00:00",
+      "hora_cierre": "23:00:00",
+      "activo": true,
+      "creado_en": "2025-09-18T12:00:00Z",
+      "actualizado_en": "2025-09-18T12:00:00Z"
+    }
+  }
+]

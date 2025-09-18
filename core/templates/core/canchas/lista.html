@@ -1,0 +1,44 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}Canchas{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="text-center mb-4">Canchas</h1>
+
+  <!-- Filtros por deporte -->
+  <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+    <a class="btn {% if not deporte_actual %}btn-warning{% else %}btn-outline-warning{% endif %}" href="{% url 'canchas' %}">Todas</a>
+    {% for code, label in deportes.items %}
+      <a class="btn {% if deporte_actual == code %}btn-warning{% else %}btn-outline-warning{% endif %}"
+         href="{% url 'canchas_por_deporte' code|lower %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  {% if canchas %}
+    <div class="row g-4">
+      {% for c in canchas %}
+        <div class="col-12 col-sm-6 col-lg-3">
+          <div class="card h-100 shadow-sm">
+            {% comment %} si luego agregas imagen en el modelo, úsala aquí {% endcomment %}
+            <img src="{% static 'core/img/canchafut.webp' %}" class="card-img-top" alt="{{ c.nombre }}">
+            <div class="card-body">
+              <h5 class="card-title">{{ c.nombre }}</h5>
+              <p class="card-text small mb-1">{{ c.descripcion|default:"" }}</p>
+              <p class="mb-1"><strong>Recinto:</strong> {{ c.recinto.nombre }}</p>
+              <p class="mb-1"><strong>Superficie:</strong> {{ c.tipo_superficie|default:"-" }}</p>
+              <span class="badge text-bg-secondary">{{ c.get_deporte_display }}</span>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center">
+              <span class="fw-bold">${{ c.precio_hora|floatformat:0 }}/h</span>
+              <a class="btn btn-sm btn-primary" href="{% url 'cancha_detalle' c.id %}">Reservar</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info">No hay canchas disponibles en esta categoría.</div>
+  {% endif %}
+</div>
+{% endblock %}

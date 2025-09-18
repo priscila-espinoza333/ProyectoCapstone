@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-4">
+  <h3>Cancelar reserva</h3>
+  <p>¿Confirmas cancelar la reserva de <strong>{{ reserva.cancha }}</strong> del
+    {{ reserva.fecha_hora_inicio|date:"d/m/Y H:i" }} a {{ reserva.fecha_hora_fin|date:"H:i" }}?</p>
+  <form method="post">{% csrf_token %}
+    <button class="btn btn-danger">Sí, cancelar</button>
+    <a class="btn btn-secondary" href="{% url 'mis_reservas' %}">Volver</a>
+  </form>
+</div>
+{% endblock %}

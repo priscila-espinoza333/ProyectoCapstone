@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Reserva cancelada{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+
+  <div class="card card-cancelacion shadow-sm border-0 mx-auto">
+    <div class="card-body">
+      <div class="icon-cancel">
+        <i class="bi bi-x-circle-fill"></i>
+      </div>
+
+      <h2 class="brand-title mb-3">
+        <span class="brand-match">RESERVA</span> <span class="brand-play">CANCELADA</span>
+      </h2>
+      <p class="text-muted">Tu reserva se canceló correctamente.</p>
+
+      <div class="resumen-cancelacion my-4">
+        <p><strong>Cancha:</strong> {{ reserva.cancha }}</p>
+        <p><strong>Fecha:</strong> {{ reserva.fecha_hora_inicio|date:"d/m/Y" }}</p>
+        <p><strong>Horario:</strong> {{ reserva.fecha_hora_inicio|date:"H:i" }} – {{ reserva.fecha_hora_fin|date:"H:i" }}</p>
+        <p><strong>Estado:</strong> {{ reserva.estado }}</p>
+      </div>
+
+      <div class="d-flex gap-2 justify-content-center">
+        <a href="{% url 'mis_reservas' %}" class="btn btn-gold">Ir a mis reservas</a>
+        <a href="{% url 'canchas' %}" class="btn btn-outline-secondary">Ver otras canchas</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

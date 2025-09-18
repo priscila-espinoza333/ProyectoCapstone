@@ -441,3 +441,220 @@ body {
   color: #aaa;
 }
 
+/* === Badges personalizados === */
+.badge-gold {
+  background-color: #ffc72c;
+  color: #1c1c1c;
+  font-weight: 600;
+}
+.badge-purple {
+  background-color: #6a0dad;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* === Encabezados de card === */
+.card-header-dark {
+  background-color: #1c1c1c;
+  color: #fff;
+  font-weight: 600;
+}
+.card-header-gold {
+  background-color: #ffc72c;
+  color: #1c1c1c;
+  font-weight: 600;
+}
+
+/* === Botón alternativo púrpura === */
+.btn-outline-purple {
+  border: 2px solid #6a0dad;
+  color: #6a0dad;
+  font-weight: 600;
+  border-radius: 30px;
+  transition: all 0.3s ease;
+}
+.btn-outline-purple:hover {
+  background-color: #6a0dad;
+  color: #fff;
+}
+
+/* === Lista info cancha === */
+.cancha-info li {
+  margin-bottom: .5rem;
+  font-size: .95rem;
+}
+.cancha-info i {
+  color: #ffc72c;
+  margin-right: .4rem;
+}
+
+/* ===========================
+   Mis reservas (lista)
+   =========================== */
+.list-reservas .item-reserva{
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.item-reserva .reserva-main{
+  min-width: 260px;
+}
+.item-reserva .reserva-meta{
+  font-size: .95rem;
+  margin-top: .15rem;
+}
+.item-reserva .reserva-badges{
+  margin-top: .35rem;
+  display: flex; gap: .35rem; flex-wrap: wrap;
+}
+.item-reserva .reserva-actions{
+  display: flex; gap: .5rem; align-items: center;
+}
+
+/* ===========================
+   Resumen de reserva
+   =========================== */
+.card-resumen{
+  max-width: 920px;
+  margin: 0 auto;
+  border-radius: 14px;
+}
+.resumen-header{
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+}
+.resumen-cancha h5{ font-weight: 700; }
+.resumen-badges{ margin-top: .35rem; display: flex; gap: .35rem; flex-wrap: wrap; }
+
+.resumen-precio{
+  text-align: right;
+}
+.precio-total{
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+.precio-label{
+  font-size: .85rem;
+}
+
+.divider-soft{
+  border: 0;
+  height: 1px;
+  background: #e9ecef;
+  margin: 1.25rem 0;
+}
+
+.resumen-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+}
+.resumen-box{
+  border: 1px solid #eef0f2;
+  border-radius: 10px;
+  padding: .9rem 1rem;
+}
+.label-soft{
+  font-size: .85rem; color: #6c757d;
+}
+.value-strong{
+  font-weight: 700; margin-top: .15rem;
+}
+
+.resumen-contacto{
+  margin-top: 1rem;
+}
+.contacto-grid{
+  display: grid; gap: .5rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  border: 1px solid #eef0f2;
+  border-radius: 10px;
+  padding: .9rem 1rem;
+}
+.contacto-label{
+  font-weight: 600;
+}
+
+.resumen-actions{
+  margin-top: 1.25rem;
+  display: flex; gap: .5rem; justify-content: flex-end; flex-wrap: wrap;
+}
+
+/* ===========================
+   Badges y botones (branding)
+   =========================== */
+.badge-gold {
+  background-color: #ffc72c;
+  color: #1c1c1c;
+  font-weight: 600;
+}
+.badge-purple {
+  background-color: #6a0dad;
+  color: #fff;
+  font-weight: 600;
+}
+.btn-outline-danger{
+  border-width: 2px;
+}
+
+/* ===========================
+   Responsive tweaks
+   =========================== */
+@media (max-width: 575.98px){
+  .precio-total{ font-size: 1.35rem; }
+  .resumen-grid{ grid-template-columns: 1fr; }
+}
+
+/* ===========================
+   Confirmación de reserva
+   =========================== */
+.card-confirmacion {
+  max-width: 600px;
+  border-radius: 16px;
+  padding: 2rem 1rem;
+}
+.icon-success {
+  font-size: 4rem;
+  color: #6a0dad;
+  margin-bottom: 1rem;
+}
+.resumen-confirmacion p {
+  margin: .25rem 0;
+  font-size: 1.05rem;
+}
+
+/* ===========================
+   Cancelación de reserva
+   =========================== */
+.card-cancelacion{
+  max-width: 600px;
+  border-radius: 16px;
+  padding: 2rem 1rem;
+}
+.icon-cancel{
+  font-size: 4rem;
+  color: #dc3545; /* rojo Bootstrap para diferenciar visualmente de confirmación */
+  margin-bottom: 1rem;
+}
+.resumen-cancelacion p{
+  margin: .25rem 0;
+  font-size: 1.05rem;
+}
+/* ===========================
+   Páginas de error (branding)
+   =========================== */
+.card-error{
+  max-width: 640px;
+  border-radius: 16px;
+  padding: 2rem 1rem;
+}
+.icon-error, .icon-warning{
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  line-height: 1;
+}
+.icon-error{ color: #dc3545; }   /* rojo Bootstrap */
+.icon-warning{ color: #fd7e14; } /* naranja Bootstrap */
+
+

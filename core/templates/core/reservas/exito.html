@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-4">
+  <div class="alert alert-success">
+    <h4>¡Reserva confirmada!</h4>
+    <p>Se envió un correo de confirmación a {{ reserva.email_contacto }} (si fue entregado).</p>
+  </div>
+  <p><strong>Detalle:</strong> {{ reserva }}</p>
+  <a class="btn btn-primary" href="{% url 'cancha_detalle' reserva.cancha.id %}">Volver</a>
+</div>
+{% endblock %}

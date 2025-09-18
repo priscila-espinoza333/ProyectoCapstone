@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Reserva confirmada{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+
+  <div class="card card-confirmacion shadow-sm border-0 mx-auto">
+    <div class="card-body">
+      <div class="icon-success">
+        <i class="bi bi-check-circle-fill"></i>
+      </div>
+
+      <h2 class="brand-title mb-3">
+        <span class="brand-match">RESERVA</span> <span class="brand-play">CONFIRMADA</span>
+      </h2>
+      <p class="text-muted">Tu reserva fue registrada exitosamente.</p>
+
+      <div class="resumen-confirmacion my-4">
+        <p><strong>Cancha:</strong> {{ reserva.cancha }}</p>
+        <p><strong>Fecha:</strong> {{ reserva.fecha_hora_inicio|date:"d/m/Y" }}</p>
+        <p><strong>Horario:</strong> {{ reserva.fecha_hora_inicio|date:"H:i" }} – {{ reserva.fecha_hora_fin|date:"H:i" }}</p>
+        <p><strong>Precio:</strong> ${{ reserva.precio_total|floatformat:0 }}</p>
+      </div>
+
+      <div class="d-flex gap-2 justify-content-center">
+        <a href="{% url 'mis_reservas' %}" class="btn btn-gold">Ir a mis reservas</a>
+        <a href="{% url 'index' %}" class="btn btn-outline-secondary">Volver al inicio</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

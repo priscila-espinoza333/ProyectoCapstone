@@ -1,0 +1,115 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% block title %}{{ cancha.nombre }} | {{ cancha.recinto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+  <!-- Encabezado -->
+  <div class="text-center mb-5">
+    <h1 class="brand-title">
+      <span class="brand-match">{{ cancha.recinto.nombre }}</span>
+    </h1>
+    <h2 class="section-heading">{{ cancha.nombre }}</h2>
+    <p class="text-muted">{{ cancha.descripcion|default:"Cancha disponible para reservas" }}</p>
+    <span class="badge badge-gold">{{ cancha.get_deporte_display }}</span>
+    <span class="badge badge-purple">{{ cancha.tipo_superficie|default:"-" }}</span>
+  </div>
+
+  <!-- Info principal -->
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0">
+        <img src="{% static 'core/img/canchafut.webp' %}" class="card-img-top" alt="Foto de {{ cancha.nombre }}">
+        <div class="card-body">
+          <h5 class="card-title">Detalles</h5>
+          <ul class="list-unstyled cancha-info">
+            <li><i class="bi bi-geo-alt"></i> {{ cancha.recinto.direccion }}</li>
+            <li><i class="bi bi-clock"></i> {{ cancha.recinto.hora_apertura|time:"H:i" }} – {{ cancha.recinto.hora_cierre|time:"H:i" }}</li>
+            <li><i class="bi bi-cash"></i> ${{ cancha.precio_hora|floatformat:0 }} / hora</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Reservas del día -->
+      {% if reservas_del_dia %}
+      <div class="card shadow-sm border-0 mt-4">
+        <div class="card-header card-header-dark">Reservas del día</div>
+        <ul class="list-group list-group-flush">
+          {% for r in reservas_del_dia %}
+          <li class="list-group-item">
+            {{ r.fecha_hora_inicio|date:"H:i" }} – {{ r.fecha_hora_fin|date:"H:i" }}
+            <span class="badge bg-info">{{ r.estado }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Formulario de reserva -->
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Reserva tu horario</h5>
+
+          <form id="reserva-form" method="post" action="{% url 'reserva_crear' cancha.id %}">
+            {% csrf_token %}
+            {{ form.cancha_id }}
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Fecha</label>
+                {{ form.fecha }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Hora inicio</label>
+                {{ form.hora_inicio }}
+              </div>
+              <div class="col-md-12">
+                <label class="form-label">Duración (min)</label>
+                {{ form.duracion_min }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Nombre</label>
+                {{ form.nombre_contacto }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Teléfono</label>
+                {{ form.telefono_contacto }}
+              </div>
+              <div class="col-md-12">
+                <label class="form-label">Correo</label>
+                {{ form.email_contacto }}
+              </div>
+            </div>
+
+            <div class="d-grid mt-4">
+              <button type="submit" class="btn btn-gold">Reservar ahora</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tramos disponibles -->
+      {% if tramos_disponibles %}
+      <div class="card shadow-sm border-0 mt-4">
+        <div class="card-header card-header-gold">Tramos disponibles</div>
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2">
+            {% for ini, fin in tramos_disponibles %}
+              <button type="button" class="btn btn-outline-purple btn-sm"
+                      onclick="pickSlot('{{ ini|date:'Y-m-d' }}','{{ ini|date:'H:i' }}')">
+                {{ ini|date:"H:i" }} – {{ fin|date:"H:i" }}
+              </button>
+            {% endfor %}
+          </div>
+          <small class="text-muted d-block mt-2">Haz clic en un tramo para autocompletar el formulario.</small>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

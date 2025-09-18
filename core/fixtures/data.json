@@ -1,0 +1,76 @@
+[
+  {
+    "model": "core.recinto",
+    "pk": 1,
+    "fields": {
+      "nombre": "MatchPlay",
+      "direccion": "Av. Deportiva 1234 Santiago",
+      "telefono": "+56 9 1234 5678"
+    }
+  },
+  {
+    "model": "core.cancha",
+    "pk": 1,
+    "fields": {
+      "recinto": 1,
+      "nombre": "Cancha 1 Pasto Sintético",
+      "deporte": "Fútbol",
+      "precio_hora": "25000.00",
+      "activa": true
+    }
+  },
+  {
+    "model": "core.cancha",
+    "pk": 2,
+    "fields": {
+      "recinto": 1,
+      "nombre": "Cancha 2 Pádel",
+      "deporte": "Pádel",
+      "precio_hora": "15000.00",
+      "activa": true
+    }
+  },
+  {
+    "model": "core.horario",
+    "pk": 1,
+    "fields": {
+      "cancha": 1,
+      "dia_semana": "Lunes",
+      "hora_inicio": "18:00:00",
+      "hora_fin": "19:00:00"
+    }
+  },
+  {
+    "model": "core.horario",
+    "pk": 2,
+    "fields": {
+      "cancha": 2,
+      "dia_semana": "Martes",
+      "hora_inicio": "19:00:00",
+      "hora_fin": "20:00:00"
+    }
+  },
+  {
+    "model": "core.reserva",
+    "pk": 1,
+    "fields": {
+      "usuario": 1,
+      "cancha": 1,
+      "fecha": "2025-09-20",
+      "hora_inicio": "18:00:00",
+      "hora_fin": "19:00:00",
+      "estado": "confirmada",
+      "creado_en": "2025-09-10T12:00:00Z"
+    }
+  },
+  {
+    "model": "core.pago",
+    "pk": 1,
+    "fields": {
+      "reserva": 1,
+      "monto": "25000.00",
+      "metodo": "transferencia",
+      "pagado_en": "2025-09-10T12:05:00Z"
+    }
+  }
+]
