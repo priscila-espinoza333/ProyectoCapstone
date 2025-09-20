@@ -3,16 +3,18 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from core.forms import ReservaForm
+from core.forms import ReservaForm, SignUpForm
 from core.models import Cancha, Reserva
 from core.services.reservas import crear_reserva
 from core.utils.slots import generar_tramos_disponibles
@@ -159,7 +161,9 @@ def reservas_confirmar(request, reserva_id: int):
     - core/reservas/confirmacion.html en caso de éxito.
     """
     r = get_object_or_404(
-        Reserva.objects.select_related("cancha", "cancha__recinto"), pk=reserva_id, usuario=request.user
+        Reserva.objects.select_related("cancha", "cancha__recinto"),
+        pk=reserva_id,
+        usuario=request.user,
     )
 
     # 1) No se puede confirmar una reserva cancelada
@@ -190,6 +194,31 @@ def reservas_confirmar(request, reserva_id: int):
     # 4) Transición de estado → CONFIRMADA
     r.estado = Reserva.Estado.CONFIRMADA
     r.save(update_fields=["estado", "precio_total", "actualizado_en"])
+
+    # 4.c) Enviar correo de confirmación (si hay destinatario)
+    #     Preferimos email de contacto explícito; si no, el del usuario autenticado (si existe).
+    destino = r.email_contacto or (r.usuario.email if r.usuario else None)
+    if destino:
+        try:
+            subject = f"Reserva confirmada · {r.cancha} · {r.fecha_hora_inicio:%d/%m %H:%M}"
+            body_txt = render_to_string("core/emails/reserva_confirmada.txt", {"reserva": r})
+            # HTML es opcional; si no existe la plantilla, usa solo txt
+            try:
+                body_html = render_to_string("core/emails/reserva_confirmada.html", {"reserva": r})
+            except Exception:
+                body_html = None
+
+            send_mail(
+                subject,
+                body_txt,
+                settings.DEFAULT_FROM_EMAIL,
+                [destino],
+                fail_silently=True,
+                html_message=body_html,
+            )
+        except Exception:
+            # No interrumpir la UX si falla SMTP
+            pass
 
     # 5) Mostrar la página de confirmación
     return render(request, "core/reservas/confirmacion.html", {"reserva": r})
@@ -283,3 +312,27 @@ def canchas_categorias(request):
     Renderiza: core/canchas/categorias.html
     """
     return render(request, "core/canchas/categorias.html")
+
+
+# -----------------------------
+# AUTENTICACIÓN (REGISTRO)
+# -----------------------------
+
+@require_http_methods(["GET", "POST"])
+def signup(request):
+    if request.user.is_authenticated:
+        return redirect("index")
+
+    if request.method == "POST":
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            auth_login(request, user)
+            messages.success(request, "¡Cuenta creada! Bienvenid@ 👋")
+            return redirect("mis_reservas")
+        else:
+            messages.error(request, "Por favor corrige los errores del formulario.")
+    else:
+        form = SignUpForm()
+
+    return render(request, "core/auth/signup.html", {"form": form})

@@ -92,16 +92,15 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- Email ---
 # Para desarrollo: imprime los correos en la consola
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@reservafutbol.local")
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"      # <-- CORRECTO PARA GMAIL
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
-# Si vas a usar SMTP (producción), configura estas variables de entorno:
-# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")  # host SMTP correcto para Gmail
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "1") == "1"
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")       # ej: recintodeportivomatchplay@gmail.com
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+CONTACT_EMAIL_TO = os.getenv("CONTACT_EMAIL_TO", EMAIL_HOST_USER)
 
 # --- Datos de contacto públicos (para la vista de contacto) ---
 CONTACT_EMAIL_TO = os.getenv("CONTACT_EMAIL_TO", EMAIL_HOST_USER or "contacto@ejemplo.cl")
@@ -110,3 +109,8 @@ CONTACT_PHONE_ALT = os.getenv("CONTACT_PHONE_ALT", "+56 2 2857 7472")
 CONTACT_ADDRESS = os.getenv("CONTACT_ADDRESS", "El Barrancón 3240, San Bernardo, Santiago")
 CONTACT_INSTAGRAM = os.getenv("CONTACT_INSTAGRAM", "https://instagram.com/matchplay")
 CONTACT_WHATSAPP = os.getenv("CONTACT_WHATSAPP", "56912345678")  # solo dígitos con país
+
+# LOGIN
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "mis_reservas"
+LOGOUT_REDIRECT_URL = "index"

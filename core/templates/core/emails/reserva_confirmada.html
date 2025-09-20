@@ -1,0 +1,11 @@
+<p>Hola {{ reserva.nombre_contacto|default:reserva.usuario.username }},</p>
+<p>Tu reserva fue confirmada:</p>
+<ul>
+  <li><strong>Cancha:</strong> {{ reserva.cancha }}</li>
+  <li><strong>Recinto:</strong> {{ reserva.cancha.recinto.nombre }}</li>
+  <li><strong>Dirección:</strong> {{ reserva.cancha.recinto.direccion }}</li>
+  <li><strong>Fecha:</strong> {{ reserva.fecha_hora_inicio|date:"d/m/Y" }}</li>
+  <li><strong>Horario:</strong> {{ reserva.fecha_hora_inicio|date:"H:i" }} – {{ reserva.fecha_hora_fin|date:"H:i" }}</li>
+  <li><strong>Total:</strong> ${{ reserva.precio_total|floatformat:0 }}</li>
+</ul>
+<p>¡Gracias por reservar en <strong>MatchPlay</strong>!</p>

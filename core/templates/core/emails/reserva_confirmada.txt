@@ -1,0 +1,12 @@
+Hola {{ reserva.nombre_contacto|default:reserva.usuario.username }},
+
+Tu reserva fue confirmada:
+
+- Cancha: {{ reserva.cancha }}
+- Recinto: {{ reserva.cancha.recinto.nombre }}
+- Dirección: {{ reserva.cancha.recinto.direccion }}
+- Fecha: {{ reserva.fecha_hora_inicio|date:"d/m/Y" }}
+- Horario: {{ reserva.fecha_hora_inicio|date:"H:i" }} – {{ reserva.fecha_hora_fin|date:"H:i" }}
+- Total: ${{ reserva.precio_total|floatformat:0 }}
+
+¡Gracias por reservar en MatchPlay!

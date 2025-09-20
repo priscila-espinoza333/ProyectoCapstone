@@ -2,6 +2,8 @@ from django import forms
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from core.models import Reserva, Cancha
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import get_user_model
 
 class ReservaForm(forms.Form):
     cancha_id = forms.IntegerField(widget=forms.HiddenInput())
@@ -47,3 +49,14 @@ class ReservaForm(forms.Form):
         cleaned["inicio"] = inicio
         cleaned["fin"] = fin
         return cleaned
+    
+    User = get_user_model()
+
+class SignUpForm(UserCreationForm):
+    email = forms.EmailField(required=True, help_text="Usaremos este correo para confirmaciones.")
+    first_name = forms.CharField(required=False, label="Nombre")
+    last_name = forms.CharField(required=False, label="Apellido")
+
+    class Meta:
+        model = User
+        fields = ("username", "email", "first_name", "last_name", "password1", "password2")
