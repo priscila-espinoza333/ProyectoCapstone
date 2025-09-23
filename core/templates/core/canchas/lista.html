@@ -8,10 +8,18 @@
 
   <!-- Filtros por deporte -->
   <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
-    <a class="btn {% if not deporte_actual %}btn-warning{% else %}btn-outline-warning{% endif %}" href="{% url 'canchas' %}">Todas</a>
+    <a
+      class="btn {% if not deporte_actual %}btn-warning{% else %}btn-outline-warning{% endif %}"
+      href="{% url 'canchas' %}"
+      {% if not deporte_actual %}aria-current="page"{% endif %}
+    >Todas</a>
+
     {% for code, label in deportes.items %}
-      <a class="btn {% if deporte_actual == code %}btn-warning{% else %}btn-outline-warning{% endif %}"
-         href="{% url 'canchas_por_deporte' code|lower %}">{{ label }}</a>
+      <a
+        class="btn {% if deporte_actual == code %}btn-warning{% else %}btn-outline-warning{% endif %}"
+        href="{% url 'canchas_por_deporte' deporte=code|lower %}"
+        {% if deporte_actual == code %}aria-current="page"{% endif %}
+      >{{ label }}</a>
     {% endfor %}
   </div>
 
@@ -20,7 +28,7 @@
       {% for c in canchas %}
         <div class="col-12 col-sm-6 col-lg-3">
           <div class="card h-100 shadow-sm">
-            {% comment %} si luego agregas imagen en el modelo, úsala aquí {% endcomment %}
+            {# Si más adelante agregas campo imagen en Cancha, úsalo aquí #}
             <img src="{% static 'core/img/canchafut.webp' %}" class="card-img-top" alt="{{ c.nombre }}">
             <div class="card-body">
               <h5 class="card-title">{{ c.nombre }}</h5>
@@ -38,7 +46,12 @@
       {% endfor %}
     </div>
   {% else %}
-    <div class="alert alert-info">No hay canchas disponibles en esta categoría.</div>
+    <div class="alert alert-info text-center">
+      No hay canchas disponibles{% if deporte_actual %} en <strong>{{ deportes.deporte_actual|default:deporte_actual }}</strong>{% endif %}.
+      <div class="mt-3">
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'canchas' %}">Ver todas</a>
+      </div>
+    </div>
   {% endif %}
 </div>
 {% endblock %}

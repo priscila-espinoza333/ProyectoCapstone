@@ -1,4 +1,6 @@
-{% extends "base.html" %}
+{# core/templates/core/reservas/resumen.html #}
+{% extends "core/base.html" %}
+{% load static %}
 {% block title %}Resumen de reserva{% endblock %}
 
 {% block content %}
@@ -11,51 +13,48 @@
     <p class="text-muted m-0">Confirma los datos antes de finalizar.</p>
   </div>
 
-  <div class="card card-resumen shadow-sm border-0">
-    <div class="card-body">
-      <div class="resumen-header">
-        <div class="resumen-cancha">
-          <h5 class="mb-1">{{ reserva.cancha }}</h5>
-          <div class="text-muted small">
-            {{ reserva.cancha.recinto.nombre }} · {{ reserva.cancha.recinto.direccion }}
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="mb-3">Detalles</h5>
+
+          <ul class="list-group list-group-flush mb-3">
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Cancha</span>
+              <strong>{{ reserva.cancha.nombre }} ({{ reserva.cancha.get_deporte_display }})</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Recinto</span>
+              <strong>{{ reserva.cancha.recinto.nombre }}</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Fecha</span>
+              <strong>{{ reserva.fecha_hora_inicio|date:"d/m/Y" }}</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Horario</span>
+              <strong>{{ reserva.fecha_hora_inicio|time:"H:i" }} – {{ reserva.fecha_hora_fin|time:"H:i" }}</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Total</span>
+              <strong>${{ reserva.precio_total|floatformat:0 }}</strong>
+            </li>
+          </ul>
+
+          <div class="d-flex gap-2 justify-content-end">
+            <a class="btn btn-outline-secondary" href="{% url 'cancha_detalle' reserva.cancha.id %}">Volver</a>
+            <form method="post" action="{% url 'reservas_confirmar' reserva_id=reserva.id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary">Confirmar reserva</button>
+            </form>
           </div>
-          <div class="resumen-badges">
-            <span class="badge badge-gold">{{ reserva.estado }}</span>
-            <span class="badge badge-purple">{{ reserva.cancha.get_deporte_display }}</span>
-          </div>
-        </div>
-        <div class="resumen-precio">
-          <div class="precio-total">${{ reserva.precio_total|floatformat:0 }}</div>
-          <div class="precio-label text-muted">valor total</div>
         </div>
       </div>
 
-      <hr class="divider-soft">
-
-      <div class="resumen-grid">
-        <div class="resumen-box">
-          <div class="label-soft">Inicio</div>
-          <div class="value-strong">{{ reserva.fecha_hora_inicio|date:"d/m/Y H:i" }}</div>
-        </div>
-        <div class="resumen-box">
-          <div class="label-soft">Término</div>
-          <div class="value-strong">{{ reserva.fecha_hora_fin|date:"d/m/Y H:i" }}</div>
-        </div>
-      </div>
-
-      <div class="resumen-contacto">
-        <div class="label-soft mb-2">Contacto</div>
-        <div class="contacto-grid">
-          <div><span class="contacto-label">Nombre:</span> {{ reserva.nombre_contacto|default:"-" }}</div>
-          <div><span class="contacto-label">Teléfono:</span> {{ reserva.telefono_contacto|default:"-" }}</div>
-          <div><span class="contacto-label">Email:</span> {{ reserva.email_contacto|default:"-" }}</div>
-        </div>
-      </div>
-
-      <div class="resumen-actions">
-        <a class="btn btn-outline-secondary" href="{% url 'cancha_detalle' reserva.cancha.id %}">Volver</a>
-        <a class="btn btn-gold" href="{% url 'reservas_confirmar' reserva.id %}">Confirmar</a>
-      </div>
+      <p class="text-center text-muted mt-3 mb-0 small">
+        Al confirmar aceptas nuestras políticas de uso y cancelación.
+      </p>
     </div>
   </div>
 

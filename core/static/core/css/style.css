@@ -634,7 +634,7 @@ body {
 }
 .icon-cancel{
   font-size: 4rem;
-  color: #dc3545; /* rojo Bootstrap para diferenciar visualmente de confirmación */
+  color: #dc3545; /* diferenciar visualmente confirmación */
   margin-bottom: 1rem;
 }
 .resumen-cancelacion p{
@@ -657,4 +657,19 @@ body {
 .icon-error{ color: #dc3545; }   /* rojo Bootstrap */
 .icon-warning{ color: #fd7e14; } /* naranja Bootstrap */
 
+
+/* ===========================
+   Reservas
+   =========================== */
+.alert-success {
+    border: 2px solid #28a745;
+    border-radius: 12px;
+    background-color: #e9f9ee;
+    font-size: 1.1rem;
+}
+
+.alert-success h1 {
+    color: #28a745;
+    font-weight: 700;
+}
 

@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from core.models import Reserva, Cancha
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
+User = get_user_model()
 
 class ReservaForm(forms.Form):
     cancha_id = forms.IntegerField(widget=forms.HiddenInput())

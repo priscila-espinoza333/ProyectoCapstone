@@ -1,0 +1,66 @@
+/* Contenedor principal */
+.email-container {
+    font-family: Arial, sans-serif;
+    max-width: 600px;
+    margin: 0 auto;
+    background: #1e1e2f;
+    color: #f5f5f5;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* Encabezado */
+.email-header {
+    background: linear-gradient(90deg, #6a0dad, #d4af37);
+    text-align: center;
+    padding: 15px;
+}
+.email-header .logo {
+    max-height: 60px;
+}
+
+/* Cuerpo */
+.email-body {
+    padding: 20px;
+}
+.email-body h1 {
+    color: #d4af37;
+    text-align: center;
+}
+.reserva-detalles {
+    background: #2e2e42;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+.reserva-detalles p {
+    margin: 5px 0;
+}
+
+/* Botón */
+.email-button {
+    text-align: center;
+    margin-top: 20px;
+}
+.email-button .btn {
+    background: #d4af37;
+    color: #1e1e2f;
+    padding: 12px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+.email-button .btn:hover {
+    background: #b8972c;
+}
+
+/* Footer */
+.email-footer {
+    background: #111122;
+    text-align: center;
+    padding: 15px;
+    font-size: 12px;
+    color: #aaa;
+}

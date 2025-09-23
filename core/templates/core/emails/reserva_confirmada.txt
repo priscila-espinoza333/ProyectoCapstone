@@ -9,4 +9,6 @@ Tu reserva fue confirmada:
 - Horario: {{ reserva.fecha_hora_inicio|date:"H:i" }} – {{ reserva.fecha_hora_fin|date:"H:i" }}
 - Total: ${{ reserva.precio_total|floatformat:0 }}
 
+Ver detalles: {{ url_reserva }}
+
 ¡Gracias por reservar en MatchPlay!

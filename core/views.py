@@ -18,7 +18,7 @@ from core.forms import ReservaForm, SignUpForm
 from core.models import Cancha, Reserva
 from core.services.reservas import crear_reserva
 from core.utils.slots import generar_tramos_disponibles
-
+from django.core.mail import EmailMultiAlternatives
 
 # -----------------------------
 # PÁGINAS EXISTENTES
@@ -160,6 +160,7 @@ def reservas_confirmar(request, reserva_id: int):
     - core/reservas/error_estado.html en caso de no poder confirmar.
     - core/reservas/confirmacion.html en caso de éxito.
     """
+
     r = get_object_or_404(
         Reserva.objects.select_related("cancha", "cancha__recinto"),
         pk=reserva_id,
@@ -195,34 +196,25 @@ def reservas_confirmar(request, reserva_id: int):
     r.estado = Reserva.Estado.CONFIRMADA
     r.save(update_fields=["estado", "precio_total", "actualizado_en"])
 
-    # 4.c) Enviar correo de confirmación (si hay destinatario)
-    #     Preferimos email de contacto explícito; si no, el del usuario autenticado (si existe).
-    destino = r.email_contacto or (r.usuario.email if r.usuario else None)
-    if destino:
-        try:
-            subject = f"Reserva confirmada · {r.cancha} · {r.fecha_hora_inicio:%d/%m %H:%M}"
-            body_txt = render_to_string("core/emails/reserva_confirmada.txt", {"reserva": r})
-            # HTML es opcional; si no existe la plantilla, usa solo txt
-            try:
-                body_html = render_to_string("core/emails/reserva_confirmada.html", {"reserva": r})
-            except Exception:
-                body_html = None
+    # 5) Enviar correo de confirmación (Punto C)
+    try:
+        from django.template.loader import render_to_string
+        from django.utils.html import strip_tags
 
-            send_mail(
-                subject,
-                body_txt,
-                settings.DEFAULT_FROM_EMAIL,
-                [destino],
-                fail_silently=True,
-                html_message=body_html,
-            )
-        except Exception:
-            # No interrumpir la UX si falla SMTP
-            pass
+        subject = f"Confirmación de Reserva #{r.id}"
+        html_message = render_to_string("core/emails/reserva_confirmada.html", {"reserva": r})
+        plain_message = strip_tags(html_message)
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [r.email_contacto or request.user.email]
 
-    # 5) Mostrar la página de confirmación
+        send_mail(subject, plain_message, from_email, recipient_list, html_message=html_message)
+    except Exception as e:
+        messages.warning(request, f"No se pudo enviar el correo de confirmación: {e}")
+
+    # 6) Mostrar la página de confirmación
     return render(request, "core/reservas/confirmacion.html", {"reserva": r})
 
+   
 
 def reservas_exito(request, reserva_id: int):
     """
