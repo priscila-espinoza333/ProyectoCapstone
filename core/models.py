@@ -32,6 +32,12 @@ class Recinto(models.Model):
         return self.nombre
 
     def horario_valido(self, inicio_dt: datetime, fin_dt: datetime) -> bool:
+        # Normaliza a hora local si son “aware”
+        if timezone.is_aware(inicio_dt):
+            inicio_dt = timezone.localtime(inicio_dt)
+        if timezone.is_aware(fin_dt):
+            fin_dt = timezone.localtime(fin_dt)
+
         if inicio_dt.date() != fin_dt.date():
             return False
         hi = inicio_dt.time()
@@ -119,7 +125,6 @@ class Reserva(models.Model):
             models.Index(fields=["cancha", "fecha_hora_fin"]),
             models.Index(fields=["estado"]),
         ]
-    #   Ojo: el constraint puede quedarse, no afecta a los timestamps
         constraints = [
             models.CheckConstraint(
                 check=models.Q(fecha_hora_fin__gt=models.F("fecha_hora_inicio")),
