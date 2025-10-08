@@ -15,11 +15,12 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from core.forms import ReservaForm, SignUpForm
-from core.models import Cancha, Reserva
+from core.models import Cancha, Reserva, ReservaTemporal
 from core.services.reservas import crear_reserva
 from core.utils.slots import generar_tramos_disponibles
 from django.core.mail import EmailMultiAlternatives
-
+from transbank.webpay.webpay_plus.transaction import Transaction
+from datetime import datetime, timedelta
 # -----------------------------
 # PÁGINAS EXISTENTES
 # -----------------------------
@@ -143,7 +144,50 @@ def reservas_resumen(request, reserva_id: int):
     reserva = get_object_or_404(Reserva.objects.select_related("cancha__recinto"), pk=reserva_id)
     return render(request, "core/reservas/resumen.html", {"reserva": reserva})
 
+# -----------------------------
+# FLUJO DE PAGO DE RESERVA
+# -----------------------------
 
+@login_required
+def pago_reserva(request, reserva_id):
+    reserva = get_object_or_404(ReservaTemporal, id=reserva_id, usuario=request.user)
+
+    if reserva.esta_expirada():
+        reserva.delete()
+        return render(request, "core/reservas/pago_fallido.html", {"error": "La reserva expiró (5 minutos sin pago)"})
+
+    return render(request, "core/reservas/pago_reserva.html", {"reserva": reserva})
+
+@login_required
+def iniciar_pago_reserva(request, reserva_id):
+    reserva = get_object_or_404(ReservaTemporal, id=reserva_id, usuario=request.user)
+
+    tx = Transaction()
+    response = tx.create(
+        buy_order=str(reserva.id),
+        session_id=str(request.user.id),
+        amount=float(reserva.precio),
+        return_url="http://localhost:8000/core/confirmar_pago_reserva/"
+    )
+
+    return redirect(response['url'] + "?token_ws=" + response['token'])
+
+@login_required
+def confirmar_pago_reserva(request):
+    token = request.GET.get("token_ws")
+    tx = Transaction()
+    response = tx.commit(token)
+
+    reserva = get_object_or_404(ReservaTemporal, id=response['buy_order'])
+
+    if response['status'] == 'AUTHORIZED':
+        reserva.pagada = True
+        reserva.save()
+        return render(request, "core/reservas/pago_exitoso.html", {"reserva": reserva})
+    else:
+        reserva.delete()
+        return render(request, "core/reservas/pago_fallido.html", {"error": "El pago no fue autorizado"})
+#--------
 @login_required
 @require_http_methods(["GET", "POST"])
 @transaction.atomic

@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from datetime import time, datetime, timedelta
+from django.contrib.auth.models import User 
 
 
 class Recinto(models.Model):
@@ -59,7 +60,7 @@ class Cancha(models.Model):
     deporte = models.CharField(max_length=12, choices=Deporte.choices, default=Deporte.FUTBOL)
     tipo_superficie = models.CharField(max_length=60, blank=True)
 
-    precio_hora = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)])
+    precio_hora = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)]) # Precio por hora 
     duracion_tramo_min = models.PositiveIntegerField(default=60, validators=[MinValueValidator(15), MaxValueValidator(240)])
     activa = models.BooleanField(default=True)
 
@@ -171,3 +172,39 @@ class Reserva(models.Model):
     @property
     def hora_fin(self):
         return timezone.localtime(self.fecha_hora_fin).time() if timezone.is_aware(self.fecha_hora_fin) else self.fecha_hora_fin.time()
+    
+    
+#Creacion de carrito y reserva temporal cronometizada    
+class Carrito(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    creado_en= models.DateTimeField(auto_now_add = True)
+    pagado = models.BooleanField(default=False)
+    
+    
+    def total(self):
+        return sum([float(r.precio) for r in self.reservas.all()]) # devuelve el float para transbank
+    
+    def __str__(self):
+        return f"Carrito {self.id} = {self.usuario.username}"
+    
+    
+class ReservaTemporal(models.Model):
+    carrito = models.ForeignKey(Carrito, related_name="reservas", on_delete=models.CASCADE) 
+    cancha = models.ForeignKey(Cancha, on_delete=models.CASCADE)
+    hora_inicio = models.DateTimeField()
+    hora_fin = models.DateTimeField()
+    precio = models.DecimalField(max_digits=10, decimal_places=2)
+    pagada = models.BooleanField(default=False)
+    creado_en = models.DateTimeField(auto_now_add=True) 
+    expira_en = models.DateTimeField()
+    
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.expira_en = timezone.now() + timedelta(minutes=5) # hold de 5 minutos
+        super().save(**args, **kwargs)
+
+    def esta_expirada(self):
+        return timezone.now() > self.expira_en and not self.pagada 
+    
+    def __str__(self):
+        return f"Reserva {self.id} = {self.cancha.nombre} ({self.carrito.usuario.username})"    

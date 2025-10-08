@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Pago Fallido</h2>
+    <p>{{ error }}</p>
+    <a href="{% url 'ver_carrito' %}" class="btn btn-secondary">Volver al carrito</a>
+{% endblock %}

@@ -114,3 +114,29 @@ CONTACT_WHATSAPP = os.getenv("CONTACT_WHATSAPP", "56912345678")  # solo dígitos
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "mis_reservas"
 LOGOUT_REDIRECT_URL = "index"
+
+
+# Configuración de Transbank Webpay
+WEBPAY_PLUS_COMMERCE_CODE = '597055555532'  # Código de comercio para pruebas
+WEBPAY_PLUS_API_KEY = '579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C'        # Para ambiente de pruebas, el API Key es el mismo
+WEBPAY_PLUS_ENV = 'TEST'                    # Puede ser 'TEST' o 'LIVE'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'recintodeportivomatchplay@gmail.com'
+EMAIL_HOST_PASSWORD = 'Admin.1234'
+
+OPENWEATHERMAP_API_KEY = '1550ad9e7a217cf2a4e717d3439c8ea3'
+#SendGrid API Key
+
+SENDGRID_API_KEY = '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'
+DEFAULT_FROM_EMAIL = 'recintodeportivomatchplay@gmail.com'
+
+CELERY_BEAT_SCHEDULE = {
+    'limpiar-reservas-expiradas-every-1-minute': {
+        'task': 'core.tasks.tarea_limpiar_reservas_expiradas',
+        'schedule': 60.0,
+    },
+}
