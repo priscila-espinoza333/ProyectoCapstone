@@ -46,8 +46,10 @@
             <a class="btn btn-outline-secondary" href="{% url 'cancha_detalle' reserva.cancha.id %}">Volver</a>
             <form method="post" action="{% url 'reservas_confirmar' reserva_id=reserva.id %}">
               {% csrf_token %}
-              <button type="submit" class="btn btn-primary">Confirmar reserva</button>
+              <!--<button type="submit" class="btn btn-primary">Confirmar reserva</button>-->
             </form>
+            <!--<button type="submit" href="{% url 'pago_reserva' reserva.id %}" class="btn btn-primary">Ir a pagar</button>-->
+            <a href="{% url 'pago_reserva' reserva.id %}" class="btn btn-success">Ir a pagar</a>
           </div>
         </div>
       </div>

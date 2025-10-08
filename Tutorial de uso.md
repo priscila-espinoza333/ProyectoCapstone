@@ -23,7 +23,7 @@ Antes de comenzar, asegúrate de tener instalados los siguientes requisitos:
 
    - En Windows:
      ```bash
-     .\venv311\Scripts\activate
+     .\venv\Scripts\activate
      ```
    - En macOS/Linux:
      ```bash

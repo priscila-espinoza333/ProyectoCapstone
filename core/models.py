@@ -189,6 +189,7 @@ class Carrito(models.Model):
     
     
 class ReservaTemporal(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
     carrito = models.ForeignKey(Carrito, related_name="reservas", on_delete=models.CASCADE) 
     cancha = models.ForeignKey(Cancha, on_delete=models.CASCADE)
     hora_inicio = models.DateTimeField()
@@ -200,8 +201,8 @@ class ReservaTemporal(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.id:
-            self.expira_en = timezone.now() + timedelta(minutes=5) # hold de 5 minutos
-        super().save(**args, **kwargs)
+            self.expira_en = timezone.now() + timedelta(minutes=5)
+        super().save(*args, **kwargs)
 
     def esta_expirada(self):
         return timezone.now() > self.expira_en and not self.pagada 

@@ -1,17 +1,18 @@
-{% extends "base.html" %}
+{% extends 'core/base.html' %}
+{% load static %}
+
+
 {% block content %}
-    <h2>🛒 Carrito de Reservas</h2>
-    <ul>    
-        {% for reserva in carrito.reservas.all %}
-            <li>{{ reserva.cancha.nombre }} - {{ reserva.hora_inicio|date:"d/m/Y H:i" }} a {{ reserva.hora_fin|date:"H:i" }} - ${{ reserva.precio }}</li>
-        {% empty %}
-            <li>No tienes reservas en el carrito.</li>
-        {% endfor %}
-    </ul>
-    <p><strong>Total: ${{ carrito.total }}</strong></p>
-
-    {% if carrito.reservas.all %}
-        <a class="btn btn-primary" href="{% url 'iniciar_pago_carrito' carrito.id %}">Pagar con Transbank</a>
-    {% endif %}
-
+<div class="container py-5">
+    <h2 class="text-center mb-4">Confirmar Pago</h2>
+    <div class="card shadow p-4">
+        <p><strong>Cancha:</strong> {{ reserva.cancha.nombre }}</p>
+        <p><strong>Horario:</strong> {{ reserva.hora_inicio }} - {{ reserva.hora_fin }}</p>
+        <p><strong>Total:</strong> ${{ reserva.precio }}</p>
+    </div>
+    <div class="text-center mt-4">
+        <a href="{% url 'resumen_reserva' reserva.id %}" class="btn btn-secondary">Volver</a>
+        <a href="{% url 'iniciar_pago_reserva' reserva.id %}" class="btn btn-primary">Pagar con Transbank</a>
+    </div>
+</div>
 {% endblock %}

@@ -21,6 +21,7 @@ from core.utils.slots import generar_tramos_disponibles
 from django.core.mail import EmailMultiAlternatives
 from transbank.webpay.webpay_plus.transaction import Transaction
 from datetime import datetime, timedelta
+from .models import ReservaTemporal
 # -----------------------------
 # PÁGINAS EXISTENTES
 # -----------------------------
@@ -151,25 +152,22 @@ def reservas_resumen(request, reserva_id: int):
 @login_required
 def pago_reserva(request, reserva_id):
     reserva = get_object_or_404(ReservaTemporal, id=reserva_id, usuario=request.user)
-
     if reserva.esta_expirada():
         reserva.delete()
-        return render(request, "core/reservas/pago_fallido.html", {"error": "La reserva expiró (5 minutos sin pago)"})
-
-    return render(request, "core/reservas/pago_reserva.html", {"reserva": reserva})
+        return render(request, "core/reservas/pago_fallido.html", {"error": "La reserva expiró (5 minutos sin pago)"},
+        )
+    return render(request, "core/reservas/carrito.html", {"reserva": reserva})
 
 @login_required
 def iniciar_pago_reserva(request, reserva_id):
     reserva = get_object_or_404(ReservaTemporal, id=reserva_id, usuario=request.user)
-
     tx = Transaction()
     response = tx.create(
         buy_order=str(reserva.id),
         session_id=str(request.user.id),
         amount=float(reserva.precio),
-        return_url="http://localhost:8000/core/confirmar_pago_reserva/"
+        return_url=request.build_absolute_uri("/confirmar_pago_reserva/"),
     )
-
     return redirect(response['url'] + "?token_ws=" + response['token'])
 
 @login_required
@@ -177,17 +175,33 @@ def confirmar_pago_reserva(request):
     token = request.GET.get("token_ws")
     tx = Transaction()
     response = tx.commit(token)
-
     reserva = get_object_or_404(ReservaTemporal, id=response['buy_order'])
-
-    if response['status'] == 'AUTHORIZED':
+    
+    if response.get("status") in ('AUTHORIZED',):
         reserva.pagada = True
         reserva.save()
-        return render(request, "core/reservas/pago_exitoso.html", {"reserva": reserva})
+        return render(request, "core/reservas/exito.html", {"reserva": reserva})
     else:
         reserva.delete()
-        return render(request, "core/reservas/pago_fallido.html", {"error": "El pago no fue autorizado"})
-#--------
+    #return render(request,"core/reservas/pago_fallido.html",{"error": "El pago fue rechazado o cancelado."})
+    send_mail(
+            subject="Reserva Confirmada - MatchPlay",
+            message=(
+                f"Tu reserva ha sido confirmada correctamente!!.\n\n"
+                f"Cancha: {reserva.cancha.nombre}\n"
+                f"Horario: {reserva.hora_inicio.strftime('%d/%m/%Y %H:%M')} - "
+                f"{reserva.hora_fin.strftime('%H:%M')}\n"
+                f"Total Pagado: ${reserva.precio}\n\n"
+                f"Gracias por Reservar con MatchPlay."
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[request.user.email, "contacto@matchplay.cl"],
+            fail_silently=False,
+    )
+    return render(request,"core/reservas/pago_fallido.html",{"error": "El pago fue rechazado o cancelado."})
+    print("Transbank create response:", response)
+#-----------------------------------------------------
+
 @login_required
 @require_http_methods(["GET", "POST"])
 @transaction.atomic
