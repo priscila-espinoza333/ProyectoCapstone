@@ -1,10 +1,7 @@
 from django.urls import path
-<<<<<<< HEAD
 from core import views, views_cart
-=======
 from core import views
 #rom . import views_cart
->>>>>>> 5af37b16cea5b2599133424a1f6e3db226cc3f16
 
 urlpatterns = [
     # Páginas principales

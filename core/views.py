@@ -21,9 +21,7 @@ from core.forms import ReservaForm
 from core.models import Cancha, Reserva, ReservaTemporal
 from core.services.reservas import crear_reserva
 from core.utils.slots import generar_tramos_disponibles
-<<<<<<< HEAD
 from users.forms import SignUpForm, ProfileForm
-=======
 from django.core.mail import EmailMultiAlternatives
 from transbank.webpay.webpay_plus.transaction import Transaction
 from datetime import datetime, timedelta
@@ -31,7 +29,6 @@ from .models import ReservaTemporal
 # -----------------------------
 # PÁGINAS EXISTENTES
 # -----------------------------
->>>>>>> 5af37b16cea5b2599133424a1f6e3db226cc3f16
 
 
 # ------------------------------------------------------------
