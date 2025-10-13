@@ -1,6 +1,10 @@
-{% extends "base.html" %}
+{% extends 'core/base.html' %}
+{% load static %}
+
 {% block content %}
-    <h2>Pago Fallido</h2>
+<div class="container py-5 text-center">
+    <h2 class="text-danger mb-3">Pago Fallido</h2>
     <p>{{ error }}</p>
-    <a href="{% url 'ver_carrito' %}" class="btn btn-secondary">Volver al carrito</a>
+    <a href="{% url 'index' %}" class="btn btn-secondary mt-4">Volver al inicio</a>
+</div>
 {% endblock %}

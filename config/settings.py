@@ -134,6 +134,28 @@ SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
 
 # --- Celery ---
 # Ojo: para que Celery funcione, debes definir CELERY_BROKER_URL y correr worker/beat.
+# Configuración de Transbank Webpay
+#WEBPAY_PLUS_COMMERCE_CODE = '597055555532'  # Código de comercio para pruebas
+#WEBPAY_PLUS_API_KEY = '579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C'        # Para ambiente de pruebas, el API Key es el mismo
+#WEBPAY_PLUS_ENV = 'TEST'                    # Puede ser 'TEST' o 'LIVE'
+
+TRANSBANK_COMMERCE_CODE = os.getenv("TRANSBANK_COMMERCE_CODE", "597055555532")
+TRANSBANK_API_KEY = os.getenv("TRANSBANK_API_KEY", "579B532A7440BB0C")
+TRANSBANK_ENVIRONMENT = os.getenv("TRANSBANK_ENVIRONMENT", "TEST")
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('recintodeportivomatchplay@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('Admin.1234')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+#SendGrid API Key
+
+SENDGRID_API_KEY = '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'
+DEFAULT_FROM_EMAIL = 'recintodeportivomatchplay@gmail.com'
+
 CELERY_BEAT_SCHEDULE = {
     "limpiar-reservas-expiradas-every-1-minute": {
         "task": "core.tasks.tarea_limpiar_reservas_expiradas",

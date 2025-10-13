@@ -21,7 +21,17 @@ from core.forms import ReservaForm
 from core.models import Cancha, Reserva, ReservaTemporal
 from core.services.reservas import crear_reserva
 from core.utils.slots import generar_tramos_disponibles
+<<<<<<< HEAD
 from users.forms import SignUpForm, ProfileForm
+=======
+from django.core.mail import EmailMultiAlternatives
+from transbank.webpay.webpay_plus.transaction import Transaction
+from datetime import datetime, timedelta
+from .models import ReservaTemporal
+# -----------------------------
+# PÁGINAS EXISTENTES
+# -----------------------------
+>>>>>>> 5af37b16cea5b2599133424a1f6e3db226cc3f16
 
 
 # ------------------------------------------------------------
@@ -238,7 +248,6 @@ def reservas_resumen(request, reserva_id: int):
 @login_required
 def pago_reserva(request, reserva_id):
     reserva = get_object_or_404(ReservaTemporal, id=reserva_id, usuario=request.user)
-
     if reserva.esta_expirada():
         reserva.delete()
         return render(
@@ -255,7 +264,6 @@ def iniciar_pago_reserva(request, reserva_id):
     from transbank.webpay.webpay_plus.transaction import Transaction
 
     reserva = get_object_or_404(ReservaTemporal, id=reserva_id, usuario=request.user)
-
     tx = Transaction()
     response = tx.create(
         buy_order=str(reserva.id),
@@ -278,7 +286,7 @@ def confirmar_pago_reserva(request):
     if response.get("status") == "AUTHORIZED":
         reserva.pagada = True
         reserva.save()
-        return render(request, "core/reservas/pago_exitoso.html", {"reserva": reserva})
+        return render(request, "core/reservas/exito.html", {"reserva": reserva})
     else:
         reserva.delete()
         return render(

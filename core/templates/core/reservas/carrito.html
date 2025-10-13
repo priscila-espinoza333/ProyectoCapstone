@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "core/base.html" %}
 {% load static %}
 {% block title %}Carrito de Reservas{% endblock %}
@@ -80,3 +81,23 @@
 </div>
 {% endblock %}
 
+=======
+{% extends 'core/base.html' %}
+{% load static %}
+
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="text-center mb-4">Confirmar Pago</h2>
+    <div class="card shadow p-4">
+        <p><strong>Cancha:</strong> {{ reserva.cancha.nombre }}</p>
+        <p><strong>Horario:</strong> {{ reserva.hora_inicio }} - {{ reserva.hora_fin }}</p>
+        <p><strong>Total:</strong> ${{ reserva.precio }}</p>
+    </div>
+    <div class="text-center mt-4">
+        <a href="{% url 'resumen_reserva' reserva.id %}" class="btn btn-secondary">Volver</a>
+        <a href="{% url 'iniciar_pago_reserva' reserva.id %}" class="btn btn-primary">Pagar con Transbank</a>
+    </div>
+</div>
+{% endblock %}
+>>>>>>> 5af37b16cea5b2599133424a1f6e3db226cc3f16

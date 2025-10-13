@@ -1,7 +1,12 @@
 {% extends "core/base.html" %}
 {% block content %}
-<div class="container my-4">
-  <div class="alert alert-success">
+<div class="container py-5 text-center">
+  <h2 class= "text-success mb-3">Pago Exitoso</h2>
+  <p>Tu reserva fue confirmada correctamente.</p>
+  <div class="card shadow p-4 mx-auto" style="max-width: 500px;" class="alert alert-success">
+    <p><strong>Cancha:</strong> {{ reserva.cancha.nombre }}</p>
+    <p><strong>Horario:</strong> {{ reserva.hora_inicio }} - {{ reserva.hora_fin }}</p>
+    <p><strong>Total Pagado:</strong> ${{ reserva.precio }}</p>
     <h4>¡Reserva confirmada!</h4>
     <p>Se envió un correo de confirmación a {{ reserva.email_contacto }} (si fue entregado).</p>
   </div>
