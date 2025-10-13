@@ -1,5 +1,22 @@
 [
   {
+    "model": "core.recinto",
+    "pk": 1,
+    "fields": {
+      "nombre": "MatchPlay Central",
+      "direccion": "Av. Deportiva 1234",
+      "comuna": "Santiago",
+      "telefono": "+56 9 1234 5678",
+      "email": "central@matchplay.cl",
+      "url_maps": "https://goo.gl/maps/example",
+      "hora_apertura": "08:00:00",
+      "hora_cierre": "23:00:00",
+      "activo": true,
+      "creado_en": "2025-09-18T12:00:00Z",
+      "actualizado_en": "2025-09-18T12:00:00Z"
+    }
+  },
+  {
     "model": "core.cancha",
     "pk": 1,
     "fields": {
@@ -21,7 +38,7 @@
     "fields": {
       "recinto": 1,
       "nombre": "Cancha 2 Fútbol 7",
-      "descripcion": "Pasto sintético, camarines",
+      "descripcion": "Pasto sintético, camarines disponibles",
       "deporte": "FUTBOL",
       "tipo_superficie": "Sintético",
       "precio_hora": "25000.00",
@@ -31,5 +48,4 @@
       "actualizado_en": "2025-09-18T12:00:00Z"
     }
   }
-
 ]

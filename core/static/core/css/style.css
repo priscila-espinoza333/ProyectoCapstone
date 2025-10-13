@@ -673,3 +673,77 @@ body {
     font-weight: 700;
 }
 
+/* =======================
+   ESTILO TABLA CARRITO
+   ======================= */
+.table td, .table th {
+  border-color: #dee2e6 !important;
+  vertical-align: middle;
+}
+
+.table thead th {
+  background-color: #3D0066;
+  color: #fff;
+  border-color: #2B004D;
+}
+
+/* Celda del botón eliminar */
+.table td.delete-cell {
+  background-color: #f9f9f9;
+  border-left: 1px solid #dee2e6;
+  text-align: center;
+  width: 70px;
+  padding: 0.5rem;
+}
+
+/* Botón eliminar */
+.delete-btn {
+  color: #dc3545;
+  border: 1px solid #f1c6c9;
+  background-color: #fff;
+  border-radius: 6px;
+  font-size: 1rem;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.delete-btn:hover {
+  color: #fff;
+  background-color: #dc3545;
+  border-color: #dc3545;
+  transform: scale(1.05);
+}
+
+/* Botón dorado MatchPlay */
+.btn-gold {
+  background-color: #FFD700;
+  border: none;
+  color: #3D0066;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+}
+.btn-gold:hover {
+  background-color: #FFC107;
+  color: #2B004D;
+}
+
+
+/* Estado de carrito vacío */
+.card.text-center.p-4 {
+  background: #fdfdfd;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+}
+
+.card.text-center.p-4 h5 {
+  color: #3D0066;
+  font-weight: 600;
+}
+
+.card.text-center.p-4 p {
+  color: #666;
+}

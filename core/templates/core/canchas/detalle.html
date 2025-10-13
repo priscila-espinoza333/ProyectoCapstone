@@ -16,14 +16,14 @@
     <span class="badge badge-purple">{{ cancha.tipo_superficie|default:"-" }}</span>
   </div>
 
-  <!-- Info principal -->
   <div class="row g-4">
+    <!-- Columna izquierda: info + reservas del día -->
     <div class="col-md-6">
       <div class="card shadow-sm border-0">
         <img src="{% static 'core/img/canchafut.webp' %}" class="card-img-top" alt="Foto de {{ cancha.nombre }}">
         <div class="card-body">
           <h5 class="card-title">Detalles</h5>
-          <ul class="list-unstyled cancha-info">
+          <ul class="list-unstyled cancha-info mb-0">
             <li><i class="bi bi-geo-alt"></i> {{ cancha.recinto.direccion }}</li>
             <li><i class="bi bi-clock"></i> {{ cancha.recinto.hora_apertura|time:"H:i" }} – {{ cancha.recinto.hora_cierre|time:"H:i" }}</li>
             <li><i class="bi bi-cash"></i> ${{ cancha.precio_hora|floatformat:0 }} / hora</li>
@@ -31,15 +31,16 @@
         </div>
       </div>
 
-      <!-- Reservas del día -->
       {% if reservas_del_dia %}
       <div class="card shadow-sm border-0 mt-4">
         <div class="card-header card-header-dark">Reservas del día</div>
         <ul class="list-group list-group-flush">
           {% for r in reservas_del_dia %}
-          <li class="list-group-item">
-            {{ r.fecha_hora_inicio|date:"H:i" }} – {{ r.fecha_hora_fin|date:"H:i" }}
-            <span class="badge bg-info">{{ r.estado }}</span>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>{{ r.fecha_hora_inicio|date:"H:i" }} – {{ r.fecha_hora_fin|date:"H:i" }}</span>
+            <span class="badge {% if r.estado == 'CONFIRMADA' %}bg-success{% elif r.estado == 'PENDIENTE' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+              {{ r.get_estado_display }}
+            </span>
           </li>
           {% endfor %}
         </ul>
@@ -47,69 +48,109 @@
       {% endif %}
     </div>
 
-    <!-- Formulario de reserva -->
+    <!-- Columna derecha: fecha + selector de tramos -->
     <div class="col-md-6">
       <div class="card shadow-sm border-0">
         <div class="card-body">
           <h5 class="card-title mb-3">Reserva tu horario</h5>
 
-          <form id="reserva-form" method="post" action="{% url 'reserva_crear' cancha.id %}">
-            {% csrf_token %}
-            {{ form.cancha_id }}
-
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">Fecha</label>
-                {{ form.fecha }}
+          {# Selector de fecha (GET) SIN botón — autosubmit al cambiar #}
+          <form method="get" class="mb-3" id="form-fecha">
+            <div class="row g-2">
+              <div class="col-12">
+                <label class="form-label" for="fecha">Fecha</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  name="fecha"
+                  id="fecha"
+                  value="{% if fecha_actual %}{{ fecha_actual|date:'Y-m-d' }}{% endif %}"
+                  required
+                >
+                <small class="text-muted">Selecciona una fecha para ver disponibilidad.</small>
               </div>
-              <div class="col-md-6">
-                <label class="form-label">Hora inicio</label>
-                {{ form.hora_inicio }}
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">Duración (min)</label>
-                {{ form.duracion_min }}
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Nombre</label>
-                {{ form.nombre_contacto }}
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Teléfono</label>
-                {{ form.telefono_contacto }}
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">Correo</label>
-                {{ form.email_contacto }}
-              </div>
-            </div>
-
-            <div class="d-grid mt-4">
-              <button type="submit" class="btn btn-gold">Reservar ahora</button>
             </div>
           </form>
-        </div>
-      </div>
 
-      <!-- Tramos disponibles -->
-      {% if tramos_disponibles %}
-      <div class="card shadow-sm border-0 mt-4">
-        <div class="card-header card-header-gold">Tramos disponibles</div>
-        <div class="card-body">
-          <div class="d-flex flex-wrap gap-2">
-            {% for ini, fin in tramos_disponibles %}
-              <button type="button" class="btn btn-outline-purple btn-sm"
-                      onclick="pickSlot('{{ ini|date:'Y-m-d' }}','{{ ini|date:'H:i' }}')">
-                {{ ini|date:"H:i" }} – {{ fin|date:"H:i" }}
-              </button>
-            {% endfor %}
+          <!-- Tramos disponibles -->
+          <div class="card shadow-sm border-0">
+            <div class="card-header card-header-gold">Tramos disponibles</div>
+            <div class="card-body">
+              {% if fecha_actual and tramos %}
+                <div id="grid-tramos" class="d-flex flex-wrap gap-2">
+                  {% for t in tramos %}
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary btn-sm tramo-btn"
+                      data-inicio="{{ t.inicio|date:'c' }}"
+                      data-fin="{{ t.fin|date:'c' }}"
+                      data-precio="{{ t.precio }}"
+                      data-label="{{ t.inicio|date:'H:i' }}–{{ t.fin|date:'H:i' }}"
+                      aria-pressed="false"
+                    >
+                      {{ t.inicio|date:"H:i" }} – {{ t.fin|date:"H:i" }}
+                      {% if t.precio %}
+                        <span class="ms-1 badge bg-light text-dark">
+                          ${{ t.precio|floatformat:0 }}
+                        </span>
+                      {% endif %}
+                    </button>
+                  {% endfor %}
+                </div>
+
+                <!-- 🚀 AQUÍ VA TU FORMULARIO -->
+                <form method="post" action="{% url 'agregar_reserva' cancha.id %}" id="form-carrito" class="mt-3">
+                  {% csrf_token %}
+                  <input type="hidden" name="inicio" id="sel-inicio">
+                  <input type="hidden" name="fin" id="sel-fin">
+
+                  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div>
+                      <div class="small text-muted">Selección:</div>
+                      <div id="sel-texto" class="fw-semibold">—</div>
+                      <div id="sel-precio" class="text-muted small"></div>
+                    </div>
+                    <div class="d-flex gap-2">
+                      <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-limpiar">Limpiar</button>
+                      <button type="submit" class="btn btn-gold" id="btn-add" disabled>Añadir al carrito</button>
+                    </div>
+                  </div>
+                </form>
+                <!-- 🚀 FIN DEL FORMULARIO -->
+
+                <small class="text-muted d-block mt-2">
+                  Puedes seleccionar <strong>1</strong> tramo o <strong>2 consecutivos</strong>.
+                </small>
+
+              {% elif fecha_actual and not tramos %}
+                <div class="alert alert-info mb-0">No hay tramos disponibles para la fecha seleccionada.</div>
+              {% else %}
+                <div class="text-muted">Selecciona una fecha para cargar los tramos.</div>
+              {% endif %}
+            </div>
           </div>
-          <small class="text-muted d-block mt-2">Haz clic en un tramo para autocompletar el formulario.</small>
         </div>
       </div>
-      {% endif %}
     </div>
   </div>
-
 </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      const fecha = document.getElementById('fecha');
+      const form  = document.getElementById('form-fecha');
+      if (fecha) {
+        // min = hoy
+        const hoy = new Date();
+        const pad = n => String(n).padStart(2,'0');
+        fecha.min = `${hoy.getFullYear()}-${pad(hoy.getMonth()+1)}-${pad(hoy.getDate())}`;
+
+        // auto-enviar al cambiar
+        fecha.addEventListener('change', () => form && form.submit());
+      }
+    });
+  </script>
+  <script src="{% static 'core/js/cancha_detalle.js' %}"></script>
 {% endblock %}

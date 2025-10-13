@@ -14,8 +14,17 @@
       <label class="form-label">Contraseña</label>
       <input type="password" name="password" class="form-control" required>
     </div>
+
     <button class="btn btn-gold w-100" type="submit">Entrar</button>
+
+    <!-- 🔹 Nuevo bloque de ayuda -->
     <div class="text-center mt-3">
+      <small>
+        <a href="{% url 'password_reset' %}">¿Olvidaste tu contraseña?</a>
+      </small>
+    </div>
+
+    <div class="text-center mt-2">
       <small>¿No tienes cuenta? <a href="{% url 'signup' %}">Regístrate</a></small>
     </div>
   </form>

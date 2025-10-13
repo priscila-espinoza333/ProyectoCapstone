@@ -1,13 +1,22 @@
 # core/models.py
-from django.db import models
+from decimal import Decimal
+from datetime import time, datetime, timedelta
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db import models
+from django.db.models import Sum
 from django.utils import timezone
-from datetime import time, datetime, timedelta
-from django.contrib.auth.models import User 
 
 
+# ---------- helpers ----------
+def default_expiry():
+    """Hold de 5 minutos para las reservas temporales."""
+    return timezone.now() + timedelta(minutes=5)
+
+
+# ---------- dominio ----------
 class Recinto(models.Model):
     nombre = models.CharField(max_length=120)
     direccion = models.CharField(max_length=255, blank=True)
@@ -20,7 +29,6 @@ class Recinto(models.Model):
     hora_cierre = models.TimeField(default=time(23, 0))    # 23:00
     activo = models.BooleanField(default=True)
 
-    # Fechas (sin default: auto_now* y default son excluyentes)
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 
@@ -60,11 +68,15 @@ class Cancha(models.Model):
     deporte = models.CharField(max_length=12, choices=Deporte.choices, default=Deporte.FUTBOL)
     tipo_superficie = models.CharField(max_length=60, blank=True)
 
-    precio_hora = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)]) # Precio por hora 
-    duracion_tramo_min = models.PositiveIntegerField(default=60, validators=[MinValueValidator(15), MaxValueValidator(240)])
+    # Precio por hora
+    precio_hora = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)]
+    )
+    duracion_tramo_min = models.PositiveIntegerField(
+        default=60, validators=[MinValueValidator(15), MaxValueValidator(240)]
+    )
     activa = models.BooleanField(default=True)
 
-    # Fechas
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 
@@ -78,16 +90,20 @@ class Cancha(models.Model):
         return f"{self.recinto.nombre} - {self.nombre}"
 
     def tiene_disponibilidad(self, inicio: datetime, fin: datetime) -> bool:
+        # Import diferido para usar la constante Estado sin cargarla antes de tiempo
         from .models import Reserva
         return not self.reservas.filter(
             estado__in=[Reserva.Estado.PENDIENTE, Reserva.Estado.CONFIRMADA],
             fecha_hora_inicio__lt=fin,
-            fecha_hora_fin__gt=inicio
+            fecha_hora_fin__gt=inicio,
         ).exists()
 
-    def calcular_precio(self, inicio: datetime, fin: datetime) -> float:
-        mins = (fin - inicio).total_seconds() / 60.0
-        return float(self.precio_hora) * (mins / 60.0)
+    def calcular_precio(self, inicio: datetime, fin: datetime) -> Decimal:
+        """Calcula precio prorrateado en horas usando Decimal (sin floats)."""
+        seconds = Decimal((fin - inicio).total_seconds())
+        hours = seconds / Decimal(3600)
+        # Si quieres forzar 2 decimales exactos: return (self.precio_hora * hours).quantize(Decimal("0.01"))
+        return self.precio_hora * hours
 
     def proponer_fin(self, inicio: datetime, duracion_min: int | None = None) -> datetime:
         if duracion_min is None:
@@ -103,17 +119,20 @@ class Reserva(models.Model):
         NO_SHOW = "NO_SHOW", "No show"
 
     cancha = models.ForeignKey(Cancha, on_delete=models.PROTECT, related_name="reservas")
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="reservas")
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="reservas"
+    )
     nombre_contacto = models.CharField(max_length=120, blank=True)
     email_contacto = models.EmailField(blank=True)
     telefono_contacto = models.CharField(max_length=30, blank=True)
 
     fecha_hora_inicio = models.DateTimeField()
     fecha_hora_fin = models.DateTimeField()
-    precio_total = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)])
+    precio_total = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)]
+    )
     estado = models.CharField(max_length=12, choices=Estado.choices, default=Estado.PENDIENTE)
 
-    # Fechas
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 
@@ -172,39 +191,71 @@ class Reserva(models.Model):
     @property
     def hora_fin(self):
         return timezone.localtime(self.fecha_hora_fin).time() if timezone.is_aware(self.fecha_hora_fin) else self.fecha_hora_fin.time()
-    
-    
-#Creacion de carrito y reserva temporal cronometizada    
+
+
 class Carrito(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
-    creado_en= models.DateTimeField(auto_now_add = True)
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="carritos",
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
     pagado = models.BooleanField(default=False)
-    
-    
-    def total(self):
-        return sum([float(r.precio) for r in self.reservas.all()]) # devuelve el float para transbank
-    
+
+    class Meta:
+        ordering = ("-creado_en",)
+        verbose_name = "Carrito"
+        verbose_name_plural = "Carritos"
+        indexes = [
+            models.Index(fields=["usuario", "pagado"]),
+        ]
+
+    @property
+    def total(self) -> Decimal:
+        """Suma segura con Decimal de todas las reservas temporales del carrito."""
+        agg = self.reservas.aggregate(suma=Sum("precio"))
+        return agg["suma"] or Decimal("0.00")
+
     def __str__(self):
-        return f"Carrito {self.id} = {self.usuario.username}"
-    
-    
+        nombre = getattr(self.usuario, "username", None) or getattr(self.usuario, "email", None) or f"id={self.usuario_id}"
+        return f"Carrito {self.id} = {nombre}"
+
+
 class ReservaTemporal(models.Model):
-    carrito = models.ForeignKey(Carrito, related_name="reservas", on_delete=models.CASCADE) 
-    cancha = models.ForeignKey(Cancha, on_delete=models.CASCADE)
+    carrito = models.ForeignKey(
+        "core.Carrito",
+        related_name="reservas",   # coincide con Carrito.total (self.reservas)
+        on_delete=models.CASCADE
+    )
+    cancha = models.ForeignKey("core.Cancha", on_delete=models.CASCADE)
     hora_inicio = models.DateTimeField()
     hora_fin = models.DateTimeField()
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     pagada = models.BooleanField(default=False)
-    creado_en = models.DateTimeField(auto_now_add=True) 
-    expira_en = models.DateTimeField()
-    
-    def save(self, *args, **kwargs):
-        if not self.id:
-            self.expira_en = timezone.now() + timedelta(minutes=5) # hold de 5 minutos
-        super().save(**args, **kwargs)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    expira_en = models.DateTimeField(default=default_expiry)
 
-    def esta_expirada(self):
-        return timezone.now() > self.expira_en and not self.pagada 
-    
+    class Meta:
+        ordering = ("-creado_en",)
+        indexes = [
+            models.Index(fields=["carrito", "pagada"]),
+            models.Index(fields=["expira_en"]),
+        ]
+        verbose_name = "Reserva temporal"
+        verbose_name_plural = "Reservas temporales"
+
+    def save(self, *args, **kwargs):
+        if self.expira_en is None:
+            self.expira_en = default_expiry()
+        super().save(*args, **kwargs)
+
+    @property
+    def duracion_minutos(self) -> int:
+        return int((self.hora_fin - self.hora_inicio).total_seconds() // 60)
+
+    def esta_expirada(self) -> bool:
+        return (not self.pagada) and timezone.now() > self.expira_en
+
     def __str__(self):
-        return f"Reserva {self.id} = {self.cancha.nombre} ({self.carrito.usuario.username})"    
+        usuario = getattr(self.carrito.usuario, "username", None) or getattr(self.carrito.usuario, "email", None) or f"id={self.carrito.usuario_id}"
+        return f"Reserva {self.id} = {self.cancha.nombre} ({usuario})"

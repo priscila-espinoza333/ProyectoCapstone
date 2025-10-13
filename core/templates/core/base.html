@@ -2,18 +2,18 @@
 {% load static %}
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>{% block title %}Reserva Deportiva{% endblock %}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <title>{% block title %}Reserva Deportiva{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Bootstrap / Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <!-- Bootstrap / Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
-    <!-- Estilo actual -->
-    <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
+  <!-- Estilos del proyecto -->
+  <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
 
-    {% block extra_css %}{% endblock %}
+  {% block extra_css %}{% endblock %}
 </head>
 <body>
 
@@ -29,8 +29,9 @@
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
-      <ul class="navbar-nav d-flex gap-5">
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <!-- Navegación principal (centrada en pantallas grandes) -->
+      <ul class="navbar-nav mx-auto d-flex gap-4">
         <li class="nav-item"><a class="nav-link" href="#">Quiénes somos</a></li>
         <li class="nav-item"><a class="nav-link" href="#">Descuentos</a></li>
         <li class="nav-item"><a class="nav-link" href="#">Gimnasio</a></li>
@@ -40,13 +41,54 @@
       </ul>
 
       <!-- Lado derecho: Auth -->
-      <ul class="navbar-nav ms-auto d-flex gap-3">
+      <ul class="navbar-nav ms-auto align-items-center">
         {% if user.is_authenticated %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'mis_reservas' %}">Mis reservas</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link fw-bold nav-login" href="{% url 'logout' %}">Salir</a>
+          {% if user.rol == "ADMIN_RECINTO" %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'panel_admin' %}">
+                <i class="bi bi-speedometer2"></i> Administración
+              </a>
+            </li>
+          {% endif %}
+
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle fw-semibold" href="#" id="userMenu" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-person-circle"></i>
+              {{ user.get_full_name|default:user.username }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+              <li>
+                <a class="dropdown-item" href="{% url 'perfil' %}">
+                  <i class="bi bi-person"></i> Mi perfil
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="{% url 'mis_reservas' %}">
+                  <i class="bi bi-calendar-check"></i> Mis reservas
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+             <!-- Enviar enlace de cambio de contraseña por correo -->
+              <li>
+                <form method="post" action="{% url 'enviar_link_reset' %}" class="dropdown-item p-0 m-0">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-link w-100 text-start p-2">
+                    <i class="bi bi-key"></i> Cambiar contraseña por email
+                  </button>
+                </form>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <!-- Logout por POST (evita 405 y cumple CSRF) -->
+                <form method="post" action="{% url 'logout' %}" class="px-3 py-1">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-link p-0 text-danger">
+                    <i class="bi bi-box-arrow-right"></i> Salir
+                  </button>
+                </form>
+              </li>
+            </ul>
           </li>
         {% else %}
           <li class="nav-item">

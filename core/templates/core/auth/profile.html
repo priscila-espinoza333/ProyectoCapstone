@@ -1,0 +1,47 @@
+{% extends "core/base.html" %}
+{% block title %}Mi perfil{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width:640px">
+  <h1 class="mb-3">Mi perfil</h1>
+
+  <!-- FORMULARIO DE PERFIL -->
+  <form method="post" action="{% url 'perfil' %}" class="card p-4 shadow-sm border-0 mb-3">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <!-- Correo electrónico (solo lectura) -->
+    <div class="mb-3">
+      <label class="form-label fw-bold">Correo electrónico</label>
+      <input type="email" class="form-control" value="{{ request.user.email }}" disabled>
+      <div class="form-text">Tu correo no puede modificarse. Si necesitas cambiarlo, contacta con soporte.</div>
+    </div>
+
+    <!-- Campos editables -->
+    {% for field in form %}
+      <div class="mb-3">
+        <label class="form-label fw-bold">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}
+          <div class="form-text">{{ field.help_text }}</div>
+        {% endif %}
+        {% for e in field.errors %}
+          <div class="text-danger small">{{ e }}</div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <!-- Botón para guardar -->
+    <button class="btn btn-gold" type="submit" name="action" value="update_profile">
+      Guardar cambios
+    </button>
+  </form>
+
+  <!-- BOTÓN SEPARADO: ENVIAR ENLACE DE CAMBIO DE CONTRASEÑA -->
+  <form method="post" action="{% url 'enviar_link_reset' %}" class="d-inline">
+    {% csrf_token %}
+    <button class="btn btn-outline-secondary" type="submit">
+      Enviar enlace de cambio de contraseña a mi correo
+    </button>
+  </form>
+</div>
+{% endblock %}

@@ -4,10 +4,31 @@
 
 {% block content %}
 <div class="container py-4">
-  <h1 class="text-center mb-4">Canchas</h1>
+
+  <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 mb-3">
+    <h1 class="h3 mb-0">Canchas</h1>
+
+    <!-- Buscador + orden -->
+    <form method="get" class="d-flex gap-2">
+      <input class="form-control" type="search" name="q" placeholder="Buscar por nombre…" value="{{ request.GET.q }}">
+      <select class="form-select" name="orden" onchange="this.form.submit()">
+        <option value="">Ordenar</option>
+        <option value="nombre" {% if request.GET.orden == "nombre" %}selected{% endif %}>Nombre (A–Z)</option>
+        <option value="-nombre" {% if request.GET.orden == "-nombre" %}selected{% endif %}>Nombre (Z–A)</option>
+        <option value="precio" {% if request.GET.orden == "precio" %}selected{% endif %}>Precio (menor a mayor)</option>
+        <option value="-precio" {% if request.GET.orden == "-precio" %}selected{% endif %}>Precio (mayor a menor)</option>
+      </select>
+
+      {# Conserva el filtro deporte si venía por URL tipo /canchas/deporte/<slug>/ #}
+      {% if deporte_actual %}
+        <input type="hidden" name="deporte" value="{{ deporte_actual|lower }}">
+      {% endif %}
+      <button class="btn btn-outline-secondary" type="submit">Aplicar</button>
+    </form>
+  </div>
 
   <!-- Filtros por deporte -->
-  <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+  <div class="d-flex flex-wrap gap-2 mb-4">
     <a
       class="btn {% if not deporte_actual %}btn-warning{% else %}btn-outline-warning{% endif %}"
       href="{% url 'canchas' %}"
@@ -17,7 +38,7 @@
     {% for code, label in deportes.items %}
       <a
         class="btn {% if deporte_actual == code %}btn-warning{% else %}btn-outline-warning{% endif %}"
-        href="{% url 'canchas_por_deporte' deporte=code|lower %}"
+        href="{% url 'canchas_por_deporte' deporte=code|lower %}{% if request.GET.q or request.GET.orden %}?{% if request.GET.q %}q={{ request.GET.q }}{% endif %}{% if request.GET.q and request.GET.orden %}&{% endif %}{% if request.GET.orden %}orden={{ request.GET.orden }}{% endif %}{% endif %}"
         {% if deporte_actual == code %}aria-current="page"{% endif %}
       >{{ label }}</a>
     {% endfor %}
@@ -28,14 +49,17 @@
       {% for c in canchas %}
         <div class="col-12 col-sm-6 col-lg-3">
           <div class="card h-100 shadow-sm">
-            {# Si más adelante agregas campo imagen en Cancha, úsalo aquí #}
             <img src="{% static 'core/img/canchafut.webp' %}" class="card-img-top" alt="{{ c.nombre }}">
-            <div class="card-body">
-              <h5 class="card-title">{{ c.nombre }}</h5>
-              <p class="card-text small mb-1">{{ c.descripcion|default:"" }}</p>
-              <p class="mb-1"><strong>Recinto:</strong> {{ c.recinto.nombre }}</p>
-              <p class="mb-1"><strong>Superficie:</strong> {{ c.tipo_superficie|default:"-" }}</p>
-              <span class="badge text-bg-secondary">{{ c.get_deporte_display }}</span>
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title mb-1">{{ c.nombre }}</h5>
+              <p class="text-muted small mb-2">{{ c.recinto.nombre }}</p>
+              {% if c.descripcion %}
+                <p class="card-text small mb-3">{{ c.descripcion|truncatechars:90 }}</p>
+              {% endif %}
+              <div class="mt-auto d-flex justify-content-between align-items-center">
+                <span class="badge text-bg-secondary">{{ c.get_deporte_display }}</span>
+                <small class="text-muted">Tramo {{ c.duracion_tramo_min }} min</small>
+              </div>
             </div>
             <div class="card-footer d-flex justify-content-between align-items-center">
               <span class="fw-bold">${{ c.precio_hora|floatformat:0 }}/h</span>
@@ -45,9 +69,43 @@
         </div>
       {% endfor %}
     </div>
+
+    {# Paginación #}
+    {% if canchas.has_other_pages %}
+      <nav class="mt-4" aria-label="Paginación">
+        <ul class="pagination justify-content-center">
+          {% if canchas.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ canchas.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.orden %}&orden={{ request.GET.orden }}{% endif %}{% if deporte_actual %}&deporte={{ deporte_actual|lower }}{% endif %}">&laquo;</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+          {% endif %}
+
+          {% for num in canchas.paginator.page_range %}
+            {% if num == canchas.number %}
+              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > canchas.number|add:'-3' and num < canchas.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.orden %}&orden={{ request.GET.orden }}{% endif %}{% if deporte_actual %}&deporte={{ deporte_actual|lower }}{% endif %}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          {% if canchas.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ canchas.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.orden %}&orden={{ request.GET.orden }}{% endif %}{% if deporte_actual %}&deporte={{ deporte_actual|lower }}{% endif %}">&raquo;</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+
   {% else %}
     <div class="alert alert-info text-center">
-      No hay canchas disponibles{% if deporte_actual %} en <strong>{{ deportes.deporte_actual|default:deporte_actual }}</strong>{% endif %}.
+      No hay canchas disponibles{% if deporte_actual %} en <strong>{{ deporte_actual|title }}</strong>{% endif %}.
       <div class="mt-3">
         <a class="btn btn-outline-secondary btn-sm" href="{% url 'canchas' %}">Ver todas</a>
       </div>

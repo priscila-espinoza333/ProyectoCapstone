@@ -1,54 +1,49 @@
-# core/utils/slots.py
 from datetime import datetime, timedelta, time
 from django.utils import timezone
-from core.models import Reserva, Cancha
+from core.models import Reserva
 
-def generar_tramos_disponibles(cancha: Cancha, fecha, duracion_min=None):
+def generar_tramos_disponibles(cancha, fecha):
     """
-    Devuelve lista de (inicio, fin) 'aware' para la fecha, respetando:
-    - horario del recinto
-    - duración de tramo de la cancha
-    - solapes con reservas PENDIENTE/CONFIRMADA
+    Devuelve lista de pares (inicio_datetime_aware, fin_datetime_aware) libres
+    en bloques de cancha.duracion_tramo_min, dentro del horario del recinto.
+    Excluye solapados con reservas PENDIENTE/CONFIRMADA.
     """
-    duracion_min = duracion_min or cancha.duracion_tramo_min
+    tz = timezone.get_current_timezone()
     rec = cancha.recinto
 
-    # inicio y fin del día (aware)
-    tz = timezone.get_current_timezone()
-    start_dt = tz.localize(datetime.combine(fecha, rec.hora_apertura))
-    end_dt   = tz.localize(datetime.combine(fecha, rec.hora_cierre))
+    # Inicio/fin del día en hora local, aware:
+    start_dt = timezone.make_aware(datetime.combine(fecha, rec.hora_apertura), tz)
+    end_dt   = timezone.make_aware(datetime.combine(fecha, rec.hora_cierre), tz)
 
-    # reservas ocupadas del día
-    ocupadas = Reserva.objects.filter(
+    paso = timedelta(minutes=getattr(cancha, "duracion_tramo_min", 60))
+
+    # Carga reservas del día para exclusión
+    reservas = Reserva.objects.filter(
         cancha=cancha,
-        estado__in=[Reserva.Estado.PENDIENTE, Reserva.Estado.CONFIRMADA],
         fecha_hora_inicio__lt=end_dt,
         fecha_hora_fin__gt=start_dt,
-    ).order_by("fecha_hora_inicio").values_list("fecha_hora_inicio", "fecha_hora_fin")
+        estado__in=[Reserva.Estado.PENDIENTE, Reserva.Estado.CONFIRMADA],
+    ).values_list("fecha_hora_inicio", "fecha_hora_fin")
 
-    # barrer el día por tramos
+    libres = []
     cursor = start_dt
-    tramos = []
-    paso = timedelta(minutes=duracion_min)
-
     while cursor + paso <= end_dt:
-        inicio = cursor
-        fin = cursor + paso
+        slot_ini = cursor
+        slot_fin = cursor + paso
 
-        # descartar pasado (si es hoy)
-        if inicio < timezone.now():
-            cursor += paso
-            continue
-
-        # chequear solape contra ocupadas
-        solapa = False
-        for oi, of in ocupadas:
-            if oi < fin and of > inicio:
-                solapa = True
+        # Excluir si solapa con una reserva
+        ocupado = False
+        for r_ini, r_fin in reservas:
+            # Asegura aware:
+            if timezone.is_naive(r_ini): r_ini = timezone.make_aware(r_ini, tz)
+            if timezone.is_naive(r_fin): r_fin = timezone.make_aware(r_fin, tz)
+            if not (slot_fin <= r_ini or slot_ini >= r_fin):
+                ocupado = True
                 break
 
-        if not solapa:
-            tramos.append((inicio, fin))
-        cursor += paso
+        if not ocupado:
+            libres.append((slot_ini, slot_fin))
 
-    return tramos
+        cursor = slot_fin
+
+    return libres

@@ -1,0 +1,12 @@
+{% extends "core/base.html" %}
+{% block content %}
+<h1>Panel de Administración</h1>
+<p>Bienvenido, {{ user.username }}</p>
+
+<nav>
+  <ul>
+
+    <li><a href="/admin/">Ir al panel de Django</a></li>
+  </ul>
+</nav>
+{% endblock %}
