@@ -6,8 +6,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from core import views as core_views
+from core.views_admin import admin_bi_dashboard  
 
 urlpatterns = [
+
+    # --- Dashboard BI dentro del Admin ---
+   path("admin/bi-dashboard/", admin_bi_dashboard, name="bi_dashboard"),
+
     # --- Panel admin de Django ---
     path("admin/", admin.site.urls),
 

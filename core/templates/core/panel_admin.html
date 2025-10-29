@@ -1,12 +1,70 @@
 {% extends "core/base.html" %}
+
 {% block content %}
-<h1>Panel de Administración</h1>
-<p>Bienvenido, {{ user.username }}</p>
+<div class="container py-5">
+  <div class="d-flex align-items-center mb-4">
+    <div class="me-3">
+      <span class="badge bg-primary rounded-pill p-3">
+        <i class="bi bi-speedometer2 fs-4"></i>
+      </span>
+    </div>
+    <div>
+      <h2 class="mb-0">Panel de Administración</h2>
+      <small class="text-muted">Bienvenido, {{ user.get_full_name|default:user.username }}</small>
+    </div>
+  </div>
 
-<nav>
-  <ul>
+  <div class="row g-4">
+    <!-- Card: Dashboard BI -->
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-graph-up-arrow fs-3 text-primary me-2"></i>
+            <h5 class="card-title mb-0">Analytics / BI</h5>
+          </div>
+          <p class="text-muted mb-4">
+            Visualiza ingresos, reservas y horas pico en tu tablero de Looker Studio.
+          </p>
+          <a href="{% url 'bi_dashboard' %}" class="btn btn-primary">
+            Abrir Dashboard BI
+            <i class="bi bi-box-arrow-up-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+    </div>
 
-    <li><a href="/admin/">Ir al panel de Django</a></li>
-  </ul>
-</nav>
+    <!-- Card: Admin de Django -->
+    <div class="col-md-6">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-gear-wide-connected fs-3 text-dark me-2"></i>
+            <h5 class="card-title mb-0">Administración del sitio</h5>
+          </div>
+          <p class="text-muted mb-4">
+            Gestiona usuarios, canchas y reservas desde el panel nativo de Django.
+          </p>
+          <a href="/admin/" class="btn btn-outline-dark">
+            Ir al panel de Django
+            <i class="bi bi-arrow-right-short ms-1"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Opcional: atajos rápidos -->
+  <div class="mt-5">
+    <h6 class="text-uppercase text-muted mb-3">Atajos rápidos</h6>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'canchas' %}">
+        <i class="bi bi-collection me-1"></i> Ver canchas
+      </a>
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'mis_reservas' %}">
+        <i class="bi bi-calendar-check me-1"></i> Mis reservas
+      </a>
+    </div>
+  </div>
+</div>
 {% endblock %}

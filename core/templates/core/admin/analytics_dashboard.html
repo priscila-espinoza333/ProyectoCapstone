@@ -1,0 +1,166 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Analytics de Arriendos | MatchPlay{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dash-card{background:#fff;border-radius:12px;box-shadow:0 6px 16px rgba(0,0,0,.06);padding:16px;margin-bottom:16px}
+  .dash-title{margin:0 0 12px;font-weight:700}
+  .filters .form-control,.filters .form-select{max-width:220px}
+  .metric{font-weight:600}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-3">Analytics de Arriendos</h1>
+  <p class="text-muted mb-4">
+    Ventana de análisis:
+    <strong>{{ date_from|date:"d/m/Y H:i" }}</strong> → <strong>{{ date_to|date:"d/m/Y H:i" }}</strong>
+  </p>
+
+  <!-- Filtros -->
+  <form method="get" action="{% url 'admin_analytics' %}" class="row g-2 align-items-end mb-3 filters">
+    <div class="col-auto">
+      <label class="form-label mb-1">Rango (días)</label>
+      <input type="number" name="days" value="{{ days|default:30 }}" min="7" max="365" class="form-control">
+    </div>
+    <div class="col-auto">
+      <label class="form-label mb-1">Cancha</label>
+      <select name="cancha" class="form-select">
+        <option value="">Todas</option>
+        {% for c in canchas %}
+          <option value="{{ c.id }}" {% if cancha_id|stringformat:"s" == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <label class="form-label mb-1">Estado</label>
+      <select name="estado" class="form-select">
+        <option value="">Todos</option>
+        {% for e in estados %}
+          <option value="{{ e }}" {% if estado == e %}selected{% endif %}>{{ e }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <label class="form-label mb-1">Umbral (horas bajas)</label>
+      <input type="number" name="umbral" value="{{ umbral|default:3 }}" min="1" max="20" class="form-control">
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-funnel"></i> Aplicar
+      </button>
+    </div>
+  </form>
+
+  <!-- Métricas rápidas -->
+  <div class="row g-3 mb-2">
+    <div class="col-md-4">
+      <div class="dash-card">
+        <h5 class="dash-title">Total de Reservas</h5>
+        <div class="metric display-6">{{ total_reservas|default:0|intcomma }}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="dash-card">
+        <h5 class="dash-title">Ingresos aprox.</h5>
+        <div class="metric display-6">${{ ingresos|default:0|floatformat:0|intcomma }}</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="dash-card">
+        <h5 class="dash-title">Pico por Hora</h5>
+        <div class="metric display-6">{{ max_hora|default:"--" }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráficos -->
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="dash-card">
+        <h5 class="dash-title">Reservas por Hora del Día</h5>
+        <canvas id="chartByHour" height="180"></canvas>
+        <small class="text-muted d-block mt-2">Muestra la distribución de reservas entre 00:00 y 23:00.</small>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="dash-card">
+        <h5 class="dash-title">Reservas por Día de la Semana</h5>
+        <canvas id="chartByWeekday" height="180"></canvas>
+        <small class="text-muted d-block mt-2">Comparativa Domingo→Sábado.</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sugerencias de promoción -->
+  <div class="dash-card mt-3">
+    <h5 class="dash-title">Sugerencias de Promoción</h5>
+
+    {% if horas_bajas_pairs %}
+      <p>Horas con demanda ≤ <strong>{{ umbral }}</strong> (candidatas a descuentos):</p>
+      <ul class="mb-3">
+        {% for par in horas_bajas_pairs %}
+          <li>{{ par.h }}:00–{{ par.h|add:1 }}:00 — reservas: <strong>{{ par.c }}</strong></li>
+        {% endfor %}
+      </ul>
+      <div class="row g-2">
+        <div class="col-md-6">
+          <div class="p-3 border rounded">
+            <h6 class="mb-2">Estrategias recomendadas</h6>
+            <ul class="mb-0">
+              <li><strong>Descuento dinámico</strong> −20% en horas bajo umbral (próximos 7 días).</li>
+              <li><strong>Happy hour</strong> en el día con menor demanda semanal.</li>
+              <li><strong>Bundles</strong> 2 horas consecutivas a 1.7× en franjas lentas.</li>
+              <li><strong>Oferta relámpago</strong> a 24–48h si la franja sigue vacía.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="p-3 border rounded">
+            <h6 class="mb-2">Top 5 horas con mayor demanda</h6>
+            <ol class="mb-0">
+              {% for t in top_horas %}
+                <li>{{ t.h }}:00–{{ t.h|add:1 }}:00 — reservas: <strong>{{ t.c }}</strong></li>
+              {% endfor %}
+            </ol>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <p class="text-muted mb-0">No se detectan horas con baja ocupación bajo el umbral actual.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Datos serializados por el backend
+  const hourData   = {{ hour_counts|default:"[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"|safe }};
+  const wdData     = {{ wd_counts|default:"[0,0,0,0,0,0,0]"|safe }};
+  const wdLabels   = {{ wd_labels|default:"[\"Dom\",\"Lun\",\"Mar\",\"Mié\",\"Jue\",\"Vie\",\"Sáb\"]"|safe }};
+  const hourLabels = Array.from({length:24}, (_,i)=> String(i).padStart(2,'0') + ":00");
+
+  function makeBar(id, labels, data){
+    new Chart(document.getElementById(id), {
+      type: 'bar',
+      data: { labels, datasets: [{ label:'Reservas', data }] },
+      options: {
+        responsive: true,
+        plugins: { legend: { display:false } },
+        scales: { y: { beginAtZero:true, ticks:{ precision:0 } } }
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    makeBar('chartByHour', hourLabels, hourData);
+    makeBar('chartByWeekday', wdLabels, wdData);
+  });
+</script>
+{% endblock %}

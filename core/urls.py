@@ -45,4 +45,5 @@ urlpatterns = [
     #path("carrito/agregar/<int:cancha_id>/", views_cart.agregar_reserva, name="agregar_reserva"),
     #path("carrito/pago/<int:carrito_id>/", views_cart.iniciar_pago_carrito, name="iniciar_pago_carrito"),
     #path("confirmar_pago_carrito/", views_cart.confirmar_pago_carrito, name="confirmar_pago_carrito"),
+    path("admin/bi-dashboard/", views.bi_dashboard, name="bi_dashboard"),
 ]

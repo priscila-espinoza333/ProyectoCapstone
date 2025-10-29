@@ -115,6 +115,7 @@ def agregar_reserva(request, cancha_id):
         "cancha": cancha,
         "precio": precio,
         "pagada": False,
+        "usuario": request.user, 
     }
     if "inicio" in campos and "fin" in campos:
         data["inicio"] = inicio

@@ -14,7 +14,10 @@
       <label class="form-label">Contraseña</label>
       <input type="password" name="password" class="form-control" required>
     </div>
-
+  <label class="inline-flex items-center gap-2 mb-4">
+    <input type="checkbox" name="remember_me" {% if request.POST.remember_me %}checked{% endif %}>
+    <span>Recordarme</span>
+  </label>
     <button class="btn btn-gold w-100" type="submit">Entrar</button>
 
     <!-- 🔹 Nuevo bloque de ayuda -->

@@ -31,6 +31,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.AdminSessionHardeningMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -56,13 +57,35 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# --- Base de datos ---
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "matchplay",
+        "USER": "app_user",
+        "PASSWORD": "SafePass2025!",
+        "HOST": "127.0.0.1",
+        "PORT": "5432",
+        "CONN_MAX_AGE": 60,
     }
 }
+
+# ============================
+#   CONFIGURACIÓN DE SESIONES
+# ============================
+
+# --- Cookies / Seguridad general ---
+SESSION_COOKIE_NAME = "mp_sessionid"
+SESSION_COOKIE_SECURE = not DEBUG      # True en prod (HTTPS), False en dev
+CSRF_COOKIE_SECURE = not DEBUG         # True en prod (HTTPS), False en dev
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False           # CSRF no puede ser HttpOnly
+SESSION_COOKIE_SAMESITE = "Lax"        # "Strict" si no embebes en iframes
+
+# --- Persistencia por defecto para usuarios finales ---
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 7   # 7 días
+SESSION_SAVE_EVERY_REQUEST = True       # Renueva vencimiento si hay actividad
+
 
 # --- Password validators ---
 AUTH_PASSWORD_VALIDATORS = [
@@ -99,6 +122,11 @@ AUTH_USER_MODEL = "users.User"
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "mis_reservas"  # cambia si tu nombre de URL es distinto
 LOGOUT_REDIRECT_URL = "login"        # "index" te daba 404 si no existe
+
+SESSION_EXPIRE_SECONDS = 1800  # 30 minutos
+SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
+SESSION_TIMEOUT_REDIRECT = '/login/'
+
 
 # --- Email ---
 # Para desarrollo, usa consola (no envía correos, imprime en terminal)

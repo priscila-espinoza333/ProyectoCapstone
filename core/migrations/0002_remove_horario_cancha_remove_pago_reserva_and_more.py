@@ -180,8 +180,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='recinto',
             name='telefono',
-            field=models.CharField(blank=True, default=datetime.datetime(2025, 9, 18, 3, 31, 37, 766111, tzinfo=datetime.timezone.utc), max_length=30),
-            preserve_default=False,
+            field=models.CharField(
+                max_length=30,
+                default='',
+                blank=True,
+            ),
         ),
         migrations.AlterField(
             model_name='reserva',

@@ -16,6 +16,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
+from django.contrib.admin.views.decorators import staff_member_required
 
 from core.forms import ReservaForm
 from core.models import Cancha, Reserva, ReservaTemporal
@@ -473,3 +474,7 @@ def enviar_link_reset(request):
 
     messages.error(request, "No se pudo enviar el correo. Revisa tu email.")
     return redirect("perfil")
+
+@staff_member_required
+def bi_dashboard(request):
+    return render(request, "admin/bi_dashboard.html")

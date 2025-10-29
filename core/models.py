@@ -224,10 +224,19 @@ class Carrito(models.Model):
 class ReservaTemporal(models.Model):
     carrito = models.ForeignKey(
         "core.Carrito",
-        related_name="reservas",   # coincide con Carrito.total (self.reservas)
+        related_name="reservas",
         on_delete=models.CASCADE
     )
     cancha = models.ForeignKey("core.Cancha", on_delete=models.CASCADE)
+
+    # ➜ nuevo: alinea el modelo con la columna ya existente en la BD
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reservas_temporales",
+        db_column="usuario_id",   # importante: usa la columna física existente
+    )
+
     hora_inicio = models.DateTimeField()
     hora_fin = models.DateTimeField()
     precio = models.DecimalField(max_digits=10, decimal_places=2)
@@ -240,6 +249,8 @@ class ReservaTemporal(models.Model):
         indexes = [
             models.Index(fields=["carrito", "pagada"]),
             models.Index(fields=["expira_en"]),
+            # (opcional) acelera consultas por usuario:
+            # models.Index(fields=["usuario"]),
         ]
         verbose_name = "Reserva temporal"
         verbose_name_plural = "Reservas temporales"
@@ -257,5 +268,9 @@ class ReservaTemporal(models.Model):
         return (not self.pagada) and timezone.now() > self.expira_en
 
     def __str__(self):
-        usuario = getattr(self.carrito.usuario, "username", None) or getattr(self.carrito.usuario, "email", None) or f"id={self.carrito.usuario_id}"
+        usuario = (
+            getattr(self.carrito.usuario, "username", None)
+            or getattr(self.carrito.usuario, "email", None)
+            or f"id={self.carrito.usuario_id}"
+        )
         return f"Reserva {self.id} = {self.cancha.nombre} ({usuario})"
