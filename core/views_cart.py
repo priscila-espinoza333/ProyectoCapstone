@@ -1,15 +1,28 @@
 # core/views_cart.py
 from datetime import datetime
+import json
 from django.contrib import messages
+import mercadopago
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_POST
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from django.urls import reverse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from transbank.webpay.webpay_plus.transaction import Transaction
+from transbank.common.integration_type import IntegrationType
+from django.db import transaction
+from transbank.common.options import WebpayOptions
+
+import uuid
 
 from transbank.webpay.webpay_plus.transaction import Transaction
-from core.models import Carrito, ReservaTemporal, Cancha
+from core.models import Carrito, ReservaTemporal, Reserva, Cancha
 
 
 # -----------------------------
@@ -150,30 +163,142 @@ def ver_carrito(request):
     carrito.refresh_from_db()
     return render(request, "core/reservas/carrito.html", {"carrito": carrito})
 
+#######################################################
+#######################################################
+#######################################################
+#######################################################
+
+def _tbk_options():
+    """Crea las opciones correctas según el entorno."""
+    if getattr(settings, "TBK_ENV", "TEST") == "LIVE":
+        return WebpayOptions(
+            commerce_code=settings.TBK_COMMERCE_CODE,
+            api_key=settings.TBK_API_KEY,
+            integration_type=IntegrationType.LIVE,
+        )
+    # Sandbox oficial
+    return WebpayOptions(
+        commerce_code="597055555532",
+        api_key="579B532A7440BB0C",
+        integration_type=IntegrationType.TEST,
+    )
+
+@login_required
+def tbk_iniciar_pago(request, carrito_id):
+    """
+    Crea una transacción Webpay Plus en SANDBOX y redirige al formulario de TBK.
+    """
+    # 1) Obtener carrito y total
+    carrito = get_object_or_404(Carrito, id=carrito_id, usuario=request.user)
+    try:
+        total = float(carrito.obtener_total() if hasattr(carrito, "obtener_total") else getattr(carrito, "total", 0))
+    except Exception:
+        total = 0.0
+
+    if total <= 0:
+        return render(request, "core/pagos/error.html", {"mensaje": "Monto 0: agrega ítems al carrito."})
+
+    # 2) Identificadores exigidos por TBK (con límites)
+    buy_order = f"ORD-{uuid.uuid4().hex[:12].upper()}"  # ≤ 26 chars
+    session_id = str(request.user.id)                   # ≤ 61 chars
+    return_url = request.build_absolute_uri(reverse("tbk_confirmar_pago"))
+
+    # 3) Opciones SANDBOX obligatorias (NO MALL)
+    options = WebpayOptions(
+        commerce_code="597055555532",
+        api_key="579B532A7440BB0C",
+        integration_type=IntegrationType.TEST
+    )
+
+    # 4) Crear transacción
+    try:
+        tx = Transaction(options)
+        resp = tx.create(
+            buy_order=buy_order,
+            session_id=session_id,
+            amount=int(round(total)),  # CLP entero
+            return_url=return_url,
+        )
+    except Exception as e:
+        return render(request, "core/pagos/error.html", {
+            "mensaje": "Error al crear transacción Webpay.",
+            "detalle": str(e),
+        })
+
+    url_tbk = (resp or {}).get("url")
+    token = (resp or {}).get("token")
+    if not url_tbk or not token:
+        return render(request, "core/pagos/error.html", {
+            "mensaje": "Webpay no entregó URL o token.",
+            "detalle": resp,
+        })
+
+    # 5) Formulario auto-submit hacia TBK
+    return render(request, "core/pagos/webpay_redirect.html", {
+        "url_tbk": url_tbk,
+        "token": token,
+    })
+
+
+@login_required
+def tbk_confirmar_pago(request):
+    """
+    Commit de la transacción a la vuelta de Webpay.
+    Si status = AUTHORIZED, puedes marcar el carrito como pagado.
+    """
+    token = request.POST.get("token_ws") or request.GET.get("token_ws")
+    if not token:
+        return render(request, "core/pagos/error.html", {"mensaje": "Falta token_ws de Webpay."})
+
+    options = WebpayOptions(
+        commerce_code="597055555532",
+        api_key="579B532A7440BB0C",
+        integration_type=IntegrationType.TEST
+    )
+
+    try:
+        tx = Transaction(options)
+        result = tx.commit(token)
+    except Exception as e:
+        return render(request, "core/pagos/error.html", {
+            "mensaje": "Error al confirmar pago con Webpay.",
+            "detalle": str(e),
+        })
+
+    status = (result or {}).get("status")
+
+    if status == "AUTHORIZED":
+        # TODO (opcional): si guardaste buy_order/session_id en tabla, aquí recuperas el carrito exacto
+        # y lo marcas como pagado. Por ahora solo mostramos success.
+        return render(request, "core/pagos/success.html", {
+            "gateway": "Webpay",
+            "result": result
+        })
+
+    # Otros estados: FAILED, REVERSED, etc.
+    return render(request, "core/pagos/failure.html", {
+        "gateway": "Webpay",
+        "result": result
+    })
+
 
 @login_required
 def iniciar_pago_carrito(request, carrito_id):
-    carrito = get_object_or_404(Carrito, id=carrito_id, usuario=request.user, pagado=False)
+    """
+    Alias legacy: algunas plantillas aún llaman a 'iniciar_pago_carrito'.
+    Redirigimos a la pasarela por defecto (elige una).
+    """
+    # Opción A: Webpay como flujo por defecto
+    return redirect('tbk_iniciar_pago', carrito_id=carrito_id)
 
-    # validar expiraciones antes de cobrar
-    for r in list(carrito.reservas.all()):
-        if hasattr(r, "esta_expirada") and r.esta_expirada():
-            carrito.reservas.all().delete()
-            messages.error(request, "Alguna reserva expiró. Vuelve a seleccionar horarios.")
-            return redirect("ver_carrito")
+    # Opción B (si prefieres Mercado Pago como default):
+    # return redirect('mp_iniciar_pago', carrito_id=carrito_id)
 
-    tx = Transaction()
-    amount = _carrito_total_float(carrito)
-
-    response = tx.create(
-        buy_order=str(carrito.id),
-        session_id=str(request.user.id),
-        amount=amount,
-        return_url=request.build_absolute_uri(reverse("confirmar_pago_carrito")),
-    )
-
-    return redirect(response["url"] + "?token_ws=" + response["token"])
-
+#######################################################
+#######################################################
+#######################################################
+#######################################################
+#######################################################
 
 @login_required
 def confirmar_pago_carrito(request):
@@ -213,3 +338,206 @@ def eliminar_reserva_carrito(request, reserva_id):
     reserva.delete()
     messages.success(request, "Reserva eliminada del carrito 🗑️")
     return redirect("ver_carrito")
+
+
+############################################################################################
+#####################################################
+#######################################################
+#################################################
+@login_required
+def mp_iniciar_pago(request, carrito_id):
+    # 0) Token
+    access_token = (getattr(settings, "MERCADOPAGO_ACCESS_TOKEN", "") or "").strip()
+    if not access_token:
+        return render(request, "core/pagos/error.html", {
+            "mensaje": "Mercado Pago no está configurado (ACCESS_TOKEN vacío).",
+            "detalle": {}
+        })
+
+    # 1) Carrito y total
+    carrito = get_object_or_404(Carrito, id=carrito_id, usuario=request.user)
+    total_raw = carrito.obtener_total() if hasattr(carrito, "obtener_total") else getattr(carrito, "total", 0)
+    try:
+        total = float(total_raw or 0)
+    except Exception:
+        total = 0.0
+    if total <= 0:
+        return render(request, "core/pagos/error.html", {
+            "mensaje": "Monto 0: agrega ítems al carrito.",
+            "detalle": {"total": total_raw}
+        })
+    total = round(total, 2)
+
+    # 2) SDK
+    sdk = mercadopago.SDK(access_token)
+
+    # 3) URLs
+    success_url = getattr(settings, "MERCADOPAGO_SUCCESS_URL", request.build_absolute_uri(reverse("mp_success")))
+    failure_url = getattr(settings, "MERCADOPAGO_FAILURE_URL", request.build_absolute_uri(reverse("mp_failure")))
+    pending_url = getattr(settings, "MERCADOPAGO_PENDING_URL", request.build_absolute_uri(reverse("mp_pending")))
+
+    # 4) Identificadores
+    external_ref = f"MP-{carrito.id}-{uuid.uuid4().hex[:8]}"
+
+    # 5) Emails de prueba
+    buyer_email = (getattr(settings, "MERCADOPAGO_TEST_BUYER_EMAIL", "") or "").strip()
+    seller_email = (getattr(settings, "MERCADOPAGO_TEST_SELLER_EMAIL", "") or "").strip()
+    if seller_email and buyer_email and buyer_email.lower() == seller_email.lower():
+        # Evita el clásico "Invalid users involved"
+        return render(request, "core/pagos/error.html", {
+            "mensaje": "Buyer y Seller no pueden ser el mismo usuario (emails iguales).",
+            "detalle": {"buyer_email": buyer_email, "seller_email": seller_email}
+        })
+
+    # 6) Preferencia mínima y amigable
+    preference_data = {
+        "items": [{
+            "title": f"MatchPlay - Carrito #{carrito.id}",
+            "quantity": 1,
+            "unit_price": total,
+            "currency_id": "CLP",
+        }],
+        "back_urls": {
+            "success": success_url,
+            "failure": failure_url,
+            "pending": pending_url,
+        },
+        ##"auto_return": "approved",
+        "payer": {
+            "email": buyer_email or "test_user_123456@testuser.com"  # fuerza comprador de prueba
+        },
+        # Evita boletos/cupones y reduce validaciones
+        "payment_methods": {
+            "excluded_payment_types": [{"id": "ticket"}]
+        },
+        # Identificador útil para reconciliar
+        "external_reference": external_ref,
+        # Texto en el extracto (donde aplique)
+        "statement_descriptor": "MATCHPLAY",
+        # ⚠️ No uses webhook en localhost hasta que funcione el flujo básico:
+        # "notification_url": getattr(settings, "MERCADOPAGO_WEBHOOK_URL", ""),
+        # "purpose": "wallet_purchase",  # si te da problemas, quítalo
+    }
+
+    # 7) Crear preferencia
+    try:
+        preference = sdk.preference().create(preference_data)
+    except Exception as e:
+        return render(request, "core/pagos/error.html", {
+            "mensaje": "Excepción del SDK al crear preferencia.",
+            "detalle": {"exception": str(e), "preference_data": preference_data}
+        })
+
+    # 8) Normaliza respuesta
+    resp = preference.get("response") or preference.get("body") or preference
+
+    # 9) Si hay error, muéstralo completo en pantalla (debug claro)
+    if isinstance(resp, dict) and (resp.get("error") or resp.get("message") or resp.get("cause")):
+        # Pretty print JSON en la plantilla
+        return render(request, "core/pagos/error.html", {
+            "mensaje": "Mercado Pago rechazó la preferencia.",
+            "detalle": json.dumps(resp, ensure_ascii=False, indent=2)
+        })
+
+    # 10) Redirección al checkout 
+    init_point = None
+    if isinstance(resp, dict):
+        init_point = resp.get("init_point") or resp.get("sandbox_init_point")
+
+    if not init_point:
+        return render(request, "core/pagos/error.html", {
+            "mensaje": "Mercado Pago no entregó init_point.",
+            "detalle": json.dumps(resp or preference or {"preference_data": preference_data}, ensure_ascii=False, indent=2)
+        })
+
+    return redirect(init_point)
+
+##########################################
+##########################################
+########################################################
+##########################################
+
+@login_required
+def mp_success(request):
+    # Aquí marcas pagado si quieres confiar en el redirect + query params
+    # Recomendado: esperar webhook para estado final.
+    return render(request, "core/pagos/exito.html", {"resultado": dict(request.GET)})
+
+@login_required
+def mp_failure(request):
+    return render(request, "core/pagos/error.html", {"mensaje": "Pago fallido", "detalle": dict(request.GET)})
+
+@login_required
+def mp_pending(request):
+    return render(request, "core/pagos/pending.html", {"detalle": dict(request.GET)})
+
+@csrf_exempt
+def mp_webhook(request):
+    """
+    Recibe notificaciones de Mercado Pago.
+    Aquí consultas el payment/status por ID y, si está aprobado,
+    marcas el carrito/reservas como pagadas y cierras el carrito.
+    """
+    # Puedes loguear request.body y luego consultar al SDK:
+    # payment_info = sdk.payment().get(payment_id)
+    return render(request, "core/pagos/ok.html")  # 200 OK
+
+
+@login_required
+@transaction.atomic
+def dummy_pagar_carrito(request, carrito_id):
+    """
+    Simula un pago exitoso:
+    - Marca el carrito como pagado
+    - Marca las reservas temporales como pagadas
+    - Crea las Reservas definitivas en la tabla Reserva
+    """
+    carrito = get_object_or_404(Carrito, id=carrito_id, usuario=request.user)
+
+    # Todas las reservas temporales asociadas al carrito
+    temporales = list(
+        carrito.reservas.select_related("cancha").all()
+    )
+
+    if not temporales:
+        # No hay nada en el carrito
+        return render(request, "core/pagos/error.html", {
+            "mensaje": "No hay reservas en el carrito para confirmar.",
+            "detalle": {}
+        })
+
+    reservas_creadas = []
+
+    # Datos de contacto básicos desde el usuario
+    usuario = carrito.usuario
+    nombre_contacto = getattr(usuario, "get_full_name", lambda: "")() or getattr(usuario, "username", "")
+    email_contacto = getattr(usuario, "email", "") or ""
+
+    # 1) Crear reservas DEFINITIVAS a partir de las temporales
+    for temp in temporales:
+        reserva = Reserva.objects.create(
+            cancha=temp.cancha,
+            usuario=usuario,
+            nombre_contacto=nombre_contacto,
+            email_contacto=email_contacto,
+            telefono_contacto="",  # aquí puedes mapear un campo teléfono si lo tienes
+            fecha_hora_inicio=temp.hora_inicio,
+            fecha_hora_fin=temp.hora_fin,
+            precio_total=temp.precio,
+            estado=Reserva.Estado.CONFIRMADA,
+        )
+        reservas_creadas.append(reserva)
+
+        # 2) Marcar la reserva temporal como pagada
+        temp.pagada = True
+        temp.save()
+
+    # 3) Marcar el carrito como pagado
+    carrito.pagado = True
+    carrito.save()
+
+    # 4) Mostrar pantalla de éxito
+    return render(request, "core/pagos/pago_dummy_exito.html", {
+        "carrito": carrito,
+        "reservas_creadas": reservas_creadas,
+    })

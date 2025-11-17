@@ -1,0 +1,14 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="alert alert-danger">
+    <h5 class="mb-2">Error en pago</h5>
+    <p>{{ mensaje }}</p>
+    {% if detalle %}
+      <hr>
+      <pre class="bg-light p-3 border rounded" style="white-space: pre-wrap;">{{ detalle }}</pre>
+    {% endif %}
+  </div>
+  <a href="{% url 'ver_carrito' %}" class="btn btn-secondary">Volver al carrito</a>
+</div>
+{% endblock %}

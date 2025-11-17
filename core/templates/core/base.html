@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
+{% load cart_tags %}
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -38,6 +39,11 @@
         <li class="nav-item"><a class="nav-link" href="#">Clases</a></li>
         <li class="nav-item"><a class="nav-link" href="#">Contacto</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'canchas' %}">Canchas</a></li>
+        <!-- Carrito (siempre visible) -->
+
+      
+
+
       </ul>
 
       <!-- Lado derecho: Auth -->
@@ -50,7 +56,7 @@
               </a>
             </li>
           {% endif %}
-
+           {% mini_cart_dropdown limit=3 %}
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle fw-semibold" href="#" id="userMenu" role="button"
                data-bs-toggle="dropdown" aria-expanded="false">
