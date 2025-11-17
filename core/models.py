@@ -79,6 +79,20 @@ class Cancha(models.Model):
 
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
+    latitud = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        blank=True,
+        null=True,
+        help_text="Latitud en formato decimal, ej: -33.448890"
+    )
+    longitud = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        blank=True,
+        null=True,
+        help_text="Longitud en formato decimal, ej: -70.669265"
+    )
 
     class Meta:
         verbose_name = "Cancha"

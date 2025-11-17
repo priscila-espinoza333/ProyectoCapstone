@@ -206,3 +206,8 @@ CELERY_BEAT_SCHEDULE = {
 
 CSRF_FAILURE_VIEW = "core.views_errors.csrf_failure"
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+
+# Aumentar límite de campos que acepta Django en un POST
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000  # o 10000 si quieres ir sobrado
+
