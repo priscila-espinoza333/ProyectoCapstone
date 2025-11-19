@@ -1,0 +1,3 @@
+# Claves y secretos
+config/keys/
+*.json
