@@ -4,6 +4,14 @@
 {% block title %}Resumen de reserva{% endblock %}
 
 {% block content %}
+{# Leaflet CSS (igual que en cancha_detalle) #}
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""
+/>
+
 <div class="container py-5">
 
   <div class="text-center mb-4">
@@ -42,14 +50,34 @@
             </li>
           </ul>
 
+          {# 🔹 MAPA: misma lógica que en cancha_detalle, pero usando reserva.cancha #}
+          {% if reserva.cancha.latitud and reserva.cancha.longitud %}
+          <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header card-header-gold">Ubicación</div>
+            <div class="card-body">
+              <p class="mb-2">
+                <strong>Dirección:</strong> {{ reserva.cancha.recinto.direccion }}
+              </p>
+              <div id="map-resumen" style="height: 350px; width: 100%; border-radius: 8px;"></div>
+            </div>
+          </div>
+          {% else %}
+          <div class="card shadow-sm border-0 mb-3">
+            <div class="card-header card-header-gold">Ubicación</div>
+            <div class="card-body">
+              <p class="mb-0"><em>Ubicación en mapa no disponible. Falta latitud/longitud.</em></p>
+            </div>
+          </div>
+          {% endif %}
+
           <div class="d-flex gap-2 justify-content-end">
             <a class="btn btn-outline-secondary" href="{% url 'cancha_detalle' reserva.cancha.id %}">Volver</a>
             <form method="post" action="{% url 'reservas_confirmar' reserva_id=reserva.id %}">
               {% csrf_token %}
-              <!--<button type="submit" class="btn btn-primary">Confirmar reserva</button>-->
+              {# botón de confirmar si lo quieres activar más adelante #}
+              {# <button type="submit" class="btn btn-primary">Confirmar reserva</button> #}
             </form>
-            <!--<button type="submit" href="{% url 'pago_reserva' reserva.id %}" class="btn btn-primary">Ir a pagar</button>-->
-            <a href="{% url 'pago_reserva' reserva.id %}" class="btn btn-success">Ir a pagar</a>
+            
           </div>
         </div>
       </div>
@@ -61,4 +89,38 @@
   </div>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+  {{ block.super }}
+
+  {# Leaflet JS (igual que en cancha_detalle) #}
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  {% if reserva.cancha.latitud and reserva.cancha.longitud %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // Igual que en cancha_detalle, pero con reserva.cancha y otro id de mapa
+      var lat = parseFloat("{{ reserva.cancha.latitud }}".replace(",", "."));
+      var lng = parseFloat("{{ reserva.cancha.longitud }}".replace(",", "."));
+
+      var map = L.map("map-resumen").setView([lat, lng], 16);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(map);
+
+      L.marker([lat, lng])
+        .addTo(map)
+        .bindPopup("{{ reserva.cancha.recinto.nombre|escapejs }}<br>{{ reserva.cancha.nombre|escapejs }}")
+        .openPopup();
+    });
+  </script>
+  {% endif %}
 {% endblock %}

@@ -21,91 +21,252 @@
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark py-1">
   <div class="container-fluid">
-    <a class="navbar-brand me-4 d-flex align-items-center" href="{% url 'index' %}">
-      <img src="{% static 'core/img/logo.png' %}" alt="Logo" class="logo-navbar">
-    </a>
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+    {# ================== NAVBAR ESPECIAL ADMIN ================== #}
+    {% if user.is_authenticated and user.rol == "ADMIN_RECINTO" and request.resolver_match %}
+      {% if request.resolver_match.url_name == "panel_admin" or request.resolver_match.url_name == "bi_dashboard" %}
 
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <!-- Navegación principal (centrada en pantallas grandes) -->
-      <ul class="navbar-nav mx-auto d-flex gap-4">
-        <li class="nav-item"><a class="nav-link" href="#">Quiénes somos</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Descuentos</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Gimnasio</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Clases</a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Contacto</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'canchas' %}">Canchas</a></li>
-        <!-- Carrito (siempre visible) -->
+        <!-- Brand -->
+        <a class="navbar-brand me-4 d-flex align-items-center" href="{% url 'panel_admin' %}">
+          <img src="{% static 'core/img/logo.png' %}" alt="Logo" class="logo-navbar me-2">
+          <span class="fw-bold">MatchPlay Admin</span>
+        </a>
 
-      
+        <!-- Toggler -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarAdmin"
+                aria-controls="navbarAdmin" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
 
-
-      </ul>
-
-      <!-- Lado derecho: Auth -->
-      <ul class="navbar-nav ms-auto align-items-center">
-        {% if user.is_authenticated %}
-          {% if user.rol == "ADMIN_RECINTO" %}
+        <div class="collapse navbar-collapse" id="navbarAdmin">
+          <!-- Menú admin izquierda -->
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
-              <a class="nav-link" href="{% url 'panel_admin' %}">
-                <i class="bi bi-speedometer2"></i> Administración
+              <a class="nav-link {% if request.resolver_match.url_name == 'panel_admin' %}active{% endif %}"
+                 href="{% url 'panel_admin' %}">
+                Resumen
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link {% if request.resolver_match.url_name == 'bi_dashboard' %}active{% endif %}"
+                 href="{% url 'bi_dashboard' %}">
+                Dashboard BI
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'admin:index' %}">
+                Admin Django
+              </a>
+            </li>
+          </ul>
+
+          <!-- Lado derecho admin -->
+          <ul class="navbar-nav ms-auto align-items-center">
+            <li class="nav-item me-2">
+              <a class="nav-link" href="{% url 'index' %}">
+                Ver sitio público
+              </a>
+            </li>
+
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle fw-semibold" href="#" id="userMenuAdmin" role="button"
+                 data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle"></i>
+                {{ user.get_full_name|default:user.username }}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuAdmin">
+                <li>
+                  <a class="dropdown-item" href="{% url 'perfil' %}">
+                    <i class="bi bi-person"></i> Mi perfil
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'mis_reservas' %}">
+                    <i class="bi bi-calendar-check"></i> Mis reservas
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="post" action="{% url 'enviar_link_reset' %}" class="dropdown-item p-0 m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link w-100 text-start p-2">
+                      <i class="bi bi-key"></i> Cambiar contraseña por email
+                    </button>
+                  </form>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="post" action="{% url 'logout' %}" class="px-3 py-1">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link p-0 text-danger">
+                      <i class="bi bi-box-arrow-right"></i> Salir
+                    </button>
+                  </form>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+      {% else %}
+
+        {# Si es admin pero está en otra vista normal -> usamos navbar normal #}
+        <a class="navbar-brand me-4 d-flex align-items-center" href="{% url 'index' %}">
+          <img src="{% static 'core/img/logo.png' %}" alt="Logo" class="logo-navbar">
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+          aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <!-- Navegación principal (centrada en pantallas grandes) -->
+          <ul class="navbar-nav mx-auto d-flex gap-4">
+            <li class="nav-item"><a class="nav-link" href="#">Quiénes somos</a></li>
+            <li class="nav-item"><a class="nav-link" href="#">Descuentos</a></li>
+            <li class="nav-item"><a class="nav-link" href="#">Gimnasio</a></li>
+            <li class="nav-item"><a class="nav-link" href="#">Clases</a></li>
+            <li class="nav-item"><a class="nav-link" href="#">Contacto</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'canchas' %}">Canchas</a></li>
+          </ul>
+
+          <!-- Lado derecho: Auth -->
+          <ul class="navbar-nav ms-auto align-items-center">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'panel_admin' %}">
+                Administración
+              </a>
+            </li>
+
+            {% mini_cart_dropdown limit=3 %}
+
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle fw-semibold" href="#" id="userMenu" role="button"
+                 data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle"></i>
+                {{ user.get_full_name|default:user.username }}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                <li>
+                  <a class="dropdown-item" href="{% url 'perfil' %}">
+                    <i class="bi bi-person"></i> Mi perfil
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'mis_reservas' %}">
+                    <i class="bi bi-calendar-check"></i> Mis reservas
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="post" action="{% url 'enviar_link_reset' %}" class="dropdown-item p-0 m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link w-100 text-start p-2">
+                      <i class="bi bi-key"></i> Cambiar contraseña por email
+                    </button>
+                  </form>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="post" action="{% url 'logout' %}" class="px-3 py-1">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link p-0 text-danger">
+                      <i class="bi bi-box-arrow-right"></i> Salir
+                    </button>
+                  </form>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+      {% endif %}
+    {% else %}
+
+      {# ================== NAVBAR NORMAL (no admin o sin estar en vistas admin) ================== #}
+      <a class="navbar-brand me-4 d-flex align-items-center" href="{% url 'index' %}">
+        <img src="{% static 'core/img/logo.png' %}" alt="Logo" class="logo-navbar">
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <!-- Navegación principal (centrada en pantallas grandes) -->
+        <ul class="navbar-nav mx-auto d-flex gap-4">
+          <li class="nav-item"><a class="nav-link" href="#">Quiénes somos</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Descuentos</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Gimnasio</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Clases</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Contacto</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'canchas' %}">Canchas</a></li>
+        </ul>
+
+        <!-- Lado derecho: Auth -->
+        <ul class="navbar-nav ms-auto align-items-center">
+          {% if user.is_authenticated %}
+            {% if user.rol == "ADMIN_RECINTO" %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'panel_admin' %}">
+                  Administración
+                </a>
+              </li>
+            {% endif %}
+
+            {% mini_cart_dropdown limit=3 %}
+
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle fw-semibold" href="#" id="userMenu2" role="button"
+                 data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle"></i>
+                {{ user.get_full_name|default:user.username }}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu2">
+                <li>
+                  <a class="dropdown-item" href="{% url 'perfil' %}">
+                    <i class="bi bi-person"></i> Mi perfil
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'mis_reservas' %}">
+                    <i class="bi bi-calendar-check"></i> Mis reservas
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="post" action="{% url 'enviar_link_reset' %}" class="dropdown-item p-0 m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link w-100 text-start p-2">
+                      <i class="bi bi-key"></i> Cambiar contraseña por email
+                    </button>
+                  </form>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="post" action="{% url 'logout' %}" class="px-3 py-1">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link p-0 text-danger">
+                      <i class="bi bi-box-arrow-right"></i> Salir
+                    </button>
+                  </form>
+                </li>
+              </ul>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link fw-bold nav-register" href="{% url 'signup' %}">REGÍSTRATE</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link fw-bold nav-login" href="{% url 'login' %}">LOGIN</a>
+            </li>
           {% endif %}
-           {% mini_cart_dropdown limit=3 %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle fw-semibold" href="#" id="userMenu" role="button"
-               data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="bi bi-person-circle"></i>
-              {{ user.get_full_name|default:user.username }}
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
-              <li>
-                <a class="dropdown-item" href="{% url 'perfil' %}">
-                  <i class="bi bi-person"></i> Mi perfil
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item" href="{% url 'mis_reservas' %}">
-                  <i class="bi bi-calendar-check"></i> Mis reservas
-                </a>
-              </li>
-              <li><hr class="dropdown-divider"></li>
-             <!-- Enviar enlace de cambio de contraseña por correo -->
-              <li>
-                <form method="post" action="{% url 'enviar_link_reset' %}" class="dropdown-item p-0 m-0">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-link w-100 text-start p-2">
-                    <i class="bi bi-key"></i> Cambiar contraseña por email
-                  </button>
-                </form>
-              </li>
-              <li><hr class="dropdown-divider"></li>
-              <li>
-                <!-- Logout por POST (evita 405 y cumple CSRF) -->
-                <form method="post" action="{% url 'logout' %}" class="px-3 py-1">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-link p-0 text-danger">
-                    <i class="bi bi-box-arrow-right"></i> Salir
-                  </button>
-                </form>
-              </li>
-            </ul>
-          </li>
-        {% else %}
-          <li class="nav-item">
-            <a class="nav-link fw-bold nav-register" href="{% url 'signup' %}">REGÍSTRATE</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link fw-bold nav-login" href="{% url 'login' %}">LOGIN</a>
-          </li>
-        {% endif %}
-      </ul>
-    </div>
+        </ul>
+      </div>
+
+    {% endif %}
   </div>
 </nav>
 

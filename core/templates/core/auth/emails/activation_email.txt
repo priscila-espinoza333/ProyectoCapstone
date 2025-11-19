@@ -1,0 +1,12 @@
+Hola {{ user.first_name|default:user.username }},
+
+Gracias por registrarte en MatchPlay.
+
+Para activar tu cuenta, abre el siguiente enlace en tu navegador:
+
+{{ activation_link }}
+
+Si tú no creaste esta cuenta, puedes ignorar este correo.
+
+Saludos,
+Equipo MatchPlay

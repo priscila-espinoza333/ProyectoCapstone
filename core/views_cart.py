@@ -23,6 +23,7 @@ import uuid
 
 from transbank.webpay.webpay_plus.transaction import Transaction
 from core.models import Carrito, ReservaTemporal, Reserva, Cancha
+from core.emails import enviar_correo_reserva
 
 
 # -----------------------------
@@ -77,12 +78,16 @@ def _carrito_total_float(carrito: Carrito) -> float:
 # Carrito
 # -----------------------------
 @login_required
-@require_POST
 def agregar_reserva(request, cancha_id):
     """
     Agrega al carrito una ReservaTemporal con inicio/fin recibidos por POST.
-    El template ya une 1 o 2 tramos consecutivos en un solo rango (inicio–fin).
+    Si viene por GET (post-login), redirige sin error 405.
     """
+
+    # Si llega por GET → pasa cuando el usuario volvió del login
+    if request.method != "POST":
+        return redirect("canchas")  # <<<<< AQUÍ DEFINES DÓNDE REBOTAR
+
     cancha = get_object_or_404(Cancha, id=cancha_id, activa=True)
 
     inicio = _parse_iso_to_aware(request.POST.get("inicio"))
@@ -97,7 +102,7 @@ def agregar_reserva(request, cancha_id):
         messages.error(request, "La hora de término debe ser posterior a la de inicio.")
         return _back_to_cancha(request, cancha_id)
 
-    # (Opcional) validar horario del recinto si tienes helper
+    # Validar horario del recinto (si existe)
     try:
         rec = cancha.recinto
         if hasattr(rec, "horario_valido"):
@@ -108,7 +113,7 @@ def agregar_reserva(request, cancha_id):
     except Exception:
         pass
 
-    # Validar disponibilidad si tu modelo lo expone
+    # Validar disponibilidad
     try:
         if hasattr(cancha, "tiene_disponibilidad") and not cancha.tiene_disponibilidad(inicio, fin):
             messages.error(request, "La cancha no está disponible en ese horario.")
@@ -117,19 +122,18 @@ def agregar_reserva(request, cancha_id):
         pass
 
     carrito = _get_or_create_carrito(request.user)
-
-    # Precio
     precio = cancha.calcular_precio(inicio, fin)
 
-    # Detecta nombres de campos de fecha/hora en ReservaTemporal
+    # Adaptación a modelos
     campos = {f.name for f in ReservaTemporal._meta.get_fields()}
     data = {
         "carrito": carrito,
         "cancha": cancha,
         "precio": precio,
         "pagada": False,
-        "usuario": request.user, 
+        "usuario": request.user,
     }
+
     if "inicio" in campos and "fin" in campos:
         data["inicio"] = inicio
         data["fin"] = fin
@@ -140,7 +144,7 @@ def agregar_reserva(request, cancha_id):
         messages.error(request, "No se pudo crear la reserva temporal (campos de hora no encontrados).")
         return _back_to_cancha(request, cancha_id)
 
-    # Crear hold temporal
+    # Crear reserva temporal
     ReservaTemporal.objects.create(**data)
 
     messages.success(request, "Se agregó tu selección al carrito ✅")
@@ -162,6 +166,17 @@ def ver_carrito(request):
 
     carrito.refresh_from_db()
     return render(request, "core/reservas/carrito.html", {"carrito": carrito})
+
+
+def _get_or_create_carrito(user):
+    """
+    Devuelve el carrito 'abierto' del usuario (pagado=False) o lo crea si no existe.
+    """
+    carrito, created = Carrito.objects.get_or_create(
+        usuario=user,
+        pagado=False,  # 👈 OJO: aquí es pagado, como en tu modelo
+    )
+    return carrito
 
 #######################################################
 #######################################################
@@ -486,58 +501,46 @@ def mp_webhook(request):
 @login_required
 @transaction.atomic
 def dummy_pagar_carrito(request, carrito_id):
-    """
-    Simula un pago exitoso:
-    - Marca el carrito como pagado
-    - Marca las reservas temporales como pagadas
-    - Crea las Reservas definitivas en la tabla Reserva
-    """
-    carrito = get_object_or_404(Carrito, id=carrito_id, usuario=request.user)
-
-    # Todas las reservas temporales asociadas al carrito
-    temporales = list(
-        carrito.reservas.select_related("cancha").all()
+    # 1. Obtener el carrito del usuario, que aún no esté pagado
+    carrito = get_object_or_404(
+        Carrito,
+        id=carrito_id,
+        usuario=request.user,
+        pagado=False,
     )
 
-    if not temporales:
-        # No hay nada en el carrito
-        return render(request, "core/pagos/error.html", {
-            "mensaje": "No hay reservas en el carrito para confirmar.",
-            "detalle": {}
-        })
-
+    # 2. Crear reservas definitivas desde las reservas temporales del carrito
     reservas_creadas = []
-
-    # Datos de contacto básicos desde el usuario
-    usuario = carrito.usuario
-    nombre_contacto = getattr(usuario, "get_full_name", lambda: "")() or getattr(usuario, "username", "")
-    email_contacto = getattr(usuario, "email", "") or ""
-
-    # 1) Crear reservas DEFINITIVAS a partir de las temporales
-    for temp in temporales:
+    for rt in carrito.reservas.filter(pagada=False):
         reserva = Reserva.objects.create(
-            cancha=temp.cancha,
-            usuario=usuario,
-            nombre_contacto=nombre_contacto,
-            email_contacto=email_contacto,
-            telefono_contacto="",  # aquí puedes mapear un campo teléfono si lo tienes
-            fecha_hora_inicio=temp.hora_inicio,
-            fecha_hora_fin=temp.hora_fin,
-            precio_total=temp.precio,
+            cancha=rt.cancha,
+            usuario=request.user,
+            nombre_contacto=getattr(request.user, "get_full_name", lambda: "")() or request.user.username,
+            email_contacto=getattr(request.user, "email", ""),
+            telefono_contacto="",  # si tienes teléfono lo agregas acá
+            fecha_hora_inicio=rt.hora_inicio,
+            fecha_hora_fin=rt.hora_fin,
+            precio_total=rt.precio,
             estado=Reserva.Estado.CONFIRMADA,
         )
         reservas_creadas.append(reserva)
+        # marcar la reserva temporal como pagada (opcional, pero prolijo)
+        rt.pagada = True
+        rt.save()
 
-        # 2) Marcar la reserva temporal como pagada
-        temp.pagada = True
-        temp.save()
-
-    # 3) Marcar el carrito como pagado
+    # 3. Marcar el carrito como pagado
     carrito.pagado = True
     carrito.save()
 
-    # 4) Mostrar pantalla de éxito
-    return render(request, "core/pagos/pago_dummy_exito.html", {
-        "carrito": carrito,
-        "reservas_creadas": reservas_creadas,
-    })
+    # 4. Enviar un correo por cada reserva creada
+    for r in reservas_creadas:
+        enviar_correo_reserva(r)
+
+    # 5. Feedback al usuario
+    messages.success(
+        request,
+        "Pago simulado realizado con éxito. Te enviamos el detalle de tu(s) reserva(s) por correo."
+    )
+
+    # Redirige donde prefieras: mis_reservas, resumen, etc.
+    return redirect("mis_reservas")

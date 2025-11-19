@@ -60,21 +60,10 @@
       <a href="{% url 'canchas' %}" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left"></i> Seguir reservando
       </a>
-<a href="{% url 'mp_iniciar_pago' carrito.id %}" class="btn btn-outline-primary">
-  Pagar con Mercado Pago
-</a>
-<a href="{% url 'tbk_iniciar_pago' carrito.id %}" class="btn btn-primary ms-2">
-  Pagar con Webpay
-</a>
-<a href="{% url 'dummy_pagar_carrito' carrito.id %}"
-   class="btn btn-primary ms-2">
-   <i class="bi bi-check-circle"></i> Pagar (Modo Prueba)
-</a>
-
-
-
-
-
+      <a href="{% url 'pagos_seleccionar' carrito.id %}" 
+        class="btn btn-gold ms-2">
+        <i class="bi bi-credit-card"></i> Ir a pagar
+      </a>
     </div>
   </div>
 {% else %}

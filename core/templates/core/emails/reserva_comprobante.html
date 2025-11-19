@@ -1,0 +1,227 @@
+{# core/templates/core/emails/reserva_comprobante.html #}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Comprobante de reserva - {{ recinto.nombre }}</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: #f4f4f5;
+      margin: 0;
+      padding: 0;
+    }
+    .email-wrapper {
+      width: 100%;
+      background-color: #f4f4f5;
+      padding: 24px 0;
+    }
+    .email-container {
+      max-width: 640px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    }
+    .email-header {
+      background: linear-gradient(135deg, #111827, #1f2937);
+      color: #f9fafb;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .brand span:nth-child(1) { color: #facc15; } /* Match */
+    .brand span:nth-child(2) { color: #22c55e; } /* Play */
+    .email-header small {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    .email-body {
+      padding: 24px;
+      color: #111827;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 12px;
+    }
+    .card {
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+      background-color: #f9fafb;
+    }
+    .row-line {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .row-label {
+      color: #6b7280;
+    }
+    .row-value {
+      font-weight: 500;
+      color: #111827;
+      text-align: right;
+    }
+    .price-row {
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 12px;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .pill {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      background-color: #ecfdf3;
+      color: #15803d;
+      font-weight: 500;
+    }
+    .map-image {
+      margin-top: 12px;
+      text-align: center;
+    }
+    .map-image img {
+      width: 100%;
+      max-height: 260px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+    .map-link {
+      font-size: 12px;
+      margin-top: 6px;
+      text-align: center;
+    }
+    .map-link a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    .map-link a:hover {
+      text-decoration: underline;
+    }
+    .email-footer {
+      padding: 16px 24px 20px;
+      font-size: 11px;
+      color: #6b7280;
+      border-top: 1px solid #e5e7eb;
+      background-color: #f9fafb;
+      text-align: center;
+    }
+    .muted {
+      color: #6b7280;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="email-container">
+
+      <div class="email-header">
+        <div class="brand">
+          <span>MATCH</span><span>PLAY</span>
+        </div>
+        <small>Comprobante de reserva</small>
+      </div>
+
+      <div class="email-body">
+        <p>Hola{% if nombre_usuario %} {{ nombre_usuario }}{% endif %},</p>
+        <p>
+          Este es el <strong>respaldo de tu reserva ya pagada</strong> en
+          <strong>{{ recinto.nombre }}</strong>.
+        </p>
+
+        <h3 class="section-title">Detalles de la reserva</h3>
+        <div class="card">
+          <div class="row-line">
+            <div class="row-label">ID de reserva: </div>
+            <div class="row-value">#{{ reserva_id }}</div>
+          </div>
+          <div class="row-line">
+            <div class="row-label">Recinto: </div>
+            <div class="row-value">{{ recinto.nombre }}</div>
+          </div>
+          <div class="row-line">
+            <div class="row-label">Cancha: </div>
+            <div class="row-value">{{ cancha.nombre }} ({{ deporte }})</div>
+          </div>
+          <div class="row-line">
+            <div class="row-label">Dirección: </div>
+            <div class="row-value">{{ recinto.direccion }}</div>
+          </div>
+          <div class="row-line">
+            <div class="row-label">Fecha: </div>
+            <div class="row-value">{{ fecha }}</div>
+          </div>
+          <div class="row-line">
+            <div class="row-label">Horario: </div>
+            <div class="row-value">{{ hora_inicio }} – {{ hora_fin }}</div>
+          </div>
+          <div class="row-line">
+            <div class="row-label">Estado: </div>
+            <div class="row-value">
+              <span class="pill">{{ estado_display }}</span>
+            </div>
+          </div>
+
+          {% if map_image_url %}
+            <div class="map-image">
+              {% if map_link_url %}
+                <a href="{{ map_link_url }}" target="_blank">
+                  <img src="{{ map_image_url }}" alt="Ubicación en mapa">
+                </a>
+              {% else %}
+                <img src="{{ map_image_url }}" alt="Ubicación en mapa">
+              {% endif %}
+            </div>
+          {% endif %}
+
+          {% if map_link_url %}
+            <div class="map-link">
+              <a href="{{ map_link_url }}" target="_blank">
+                Ver ubicación en Google Maps
+              </a>
+            </div>
+          {% endif %}
+
+          <div class="price-row">
+            <span>Total pagado:</span>
+            <span>${{ total }}</span>
+          </div>
+        </div>
+
+        <p class="muted">
+          Te recomendamos guardar este correo como comprobante.  
+          Si necesitas hacer cambios o tienes dudas, contáctanos por nuestros canales de atención.
+        </p>
+      </div>
+
+      <div class="email-footer">
+        <div>© {{ year }} MatchPlay. Todos los derechos reservados.</div>
+        {% if soporte_email %}
+          <div>Soporte: {{ soporte_email }}</div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

@@ -1,29 +1,20 @@
-"""
-URL configuration for config project.
-"""
-
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from core import views as core_views
-from core.views_admin import admin_bi_dashboard  
+from core.views_admin import admin_bi_dashboard
+from core.views_auth import CustomPasswordResetConfirmView
 
 urlpatterns = [
-
-    # --- Dashboard BI dentro del Admin ---
-   path("admin/bi-dashboard/", admin_bi_dashboard, name="bi_dashboard"),
-
-    # --- Panel admin de Django ---
+    path("admin/bi-dashboard/", admin_bi_dashboard, name="bi_dashboard"),
     path("admin/", admin.site.urls),
 
-    # --- App principal ---
-    path("", include("core.urls")),
-
-    # --- Autenticación (templates en templates/core/auth/) ---
-    # Login / Logout / Signup
+    # Auth
     path(
         "accounts/login/",
-        auth_views.LoginView.as_view(template_name="core/auth/login.html"),
+        auth_views.LoginView.as_view(
+            template_name="core/auth/login.html",
+        ),
         name="login",
     ),
     path(
@@ -33,7 +24,7 @@ urlpatterns = [
     ),
     path("accounts/signup/", core_views.signup, name="signup"),
 
-    # --- Recuperación de contraseña por correo ---
+    # Reset de contraseña (solo aquí se envía el correo)
     path(
         "accounts/password-reset/",
         auth_views.PasswordResetView.as_view(
@@ -53,8 +44,8 @@ urlpatterns = [
     ),
     path(
         "accounts/reset/<uidb64>/<token>/",
-        auth_views.PasswordResetConfirmView.as_view(
-            template_name="core/auth/password_reset_confirm.html"
+        CustomPasswordResetConfirmView.as_view(
+            template_name="core/auth/password_reset_confirm.html",
         ),
         name="password_reset_confirm",
     ),
@@ -66,10 +57,16 @@ urlpatterns = [
         name="password_reset_complete",
     ),
 
-    # --- Enviar enlace de reset desde el perfil (1 clic) ---
+    path("post-login/", core_views.post_login_redirect, name="post_login_redirect"),
+
+
+    # (opcional) si decides mantener enviar_link_reset SOLO como redirect
     path(
         "cuenta/enviar-reset/",
         core_views.enviar_link_reset,
         name="enviar_link_reset",
     ),
+
+    # App principal
+    path("", include("core.urls")),
 ]

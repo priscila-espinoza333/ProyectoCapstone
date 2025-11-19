@@ -1,47 +1,157 @@
 {% extends "core/base.html" %}
 {% block title %}Mi perfil{% endblock %}
+
 {% block content %}
-<div class="container py-5" style="max-width:640px">
-  <h1 class="mb-3">Mi perfil</h1>
+<div class="container py-5" style="max-width:720px">
 
-  <!-- FORMULARIO DE PERFIL -->
-  <form method="post" action="{% url 'perfil' %}" class="card p-4 shadow-sm border-0 mb-3">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
+  <h1 class="mb-4">Mi perfil</h1>
 
-    <!-- Correo electrónico (solo lectura) -->
-    <div class="mb-3">
-      <label class="form-label fw-bold">Correo electrónico</label>
-      <input type="email" class="form-control" value="{{ request.user.email }}" disabled>
-      <div class="form-text">Tu correo no puede modificarse. Si necesitas cambiarlo, contacta con soporte.</div>
+  <!-- ============================
+       DATOS PERSONALES
+  ============================= -->
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-0">Datos personales</h5>
+        <small class="text-light opacity-75">Revisa y actualiza tu información básica</small>
+      </div>
+      <span class="badge bg-warning text-dark">Usuario MatchPlay</span>
     </div>
 
-    <!-- Campos editables -->
-    {% for field in form %}
-      <div class="mb-3">
-        <label class="form-label fw-bold">{{ field.label }}</label>
-        {{ field }}
-        {% if field.help_text %}
-          <div class="form-text">{{ field.help_text }}</div>
-        {% endif %}
-        {% for e in field.errors %}
-          <div class="text-danger small">{{ e }}</div>
+    <div class="card-body">
+      <form method="post" action="{% url 'perfil' %}" id="perfil-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <!-- Correo electrónico (solo lectura) -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Correo electrónico</label>
+          <input
+            type="email"
+            class="form-control"
+            id="email-readonly"
+            value="{{ request.user.email }}"
+            disabled
+          >
+          <div class="form-text">
+            Tu correo no puede modificarse. Si necesitas cambiarlo, contacta con soporte.
+          </div>
+        </div>
+
+        <!-- Campos editables (se bloquean por JS al cargar) -->
+        {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold" for="{{ field.id_for_label }}">
+              {{ field.label }}
+            </label>
+            {{ field }}
+            {% if field.help_text %}
+              <div class="form-text">{{ field.help_text }}</div>
+            {% endif %}
+            {% for e in field.errors %}
+              <div class="text-danger small">{{ e }}</div>
+            {% endfor %}
+          </div>
         {% endfor %}
-      </div>
-    {% endfor %}
 
-    <!-- Botón para guardar -->
-    <button class="btn btn-gold" type="submit" name="action" value="update_profile">
-      Guardar cambios
-    </button>
-  </form>
+        <!-- Botones -->
+        <div class="d-flex gap-2 justify-content-end mt-3">
+          <!-- Modo lectura -->
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            id="btn-edit"
+          >
+            Editar perfil
+          </button>
 
-  <!-- BOTÓN SEPARADO: ENVIAR ENLACE DE CAMBIO DE CONTRASEÑA -->
-  <form method="post" action="{% url 'enviar_link_reset' %}" class="d-inline">
-    {% csrf_token %}
-    <button class="btn btn-outline-secondary" type="submit">
-      Enviar enlace de cambio de contraseña a mi correo
-    </button>
-  </form>
+          <!-- Modo edición (ocultos al inicio) -->
+          <button
+            class="btn btn-gold d-none"
+            type="submit"
+            id="btn-save"
+            name="action"
+            value="update_profile"
+          >
+            Guardar cambios
+          </button>
+          <button
+            class="btn btn-light border d-none"
+            type="button"
+            id="btn-cancel"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================
+       SEGURIDAD / CONTRASEÑA
+  ============================= -->
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">Seguridad</h5>
+    </div>
+    <div class="card-body">
+      <p class="mb-3 text-muted">
+        Si quieres cambiar tu contraseña, te enviaremos un enlace seguro a tu correo registrado.
+      </p>
+      <form method="post" action="{% url 'enviar_link_reset' %}">
+        {% csrf_token %}
+        <button class="btn btn-outline-primary" type="submit">
+          Enviar enlace de cambio de contraseña
+        </button>
+      </form>
+    </div>
+  </div>
+
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("perfil-form");
+    const editBtn = document.getElementById("btn-edit");
+    const saveBtn = document.getElementById("btn-save");
+    const cancelBtn = document.getElementById("btn-cancel");
+
+    // Bloquea todos los campos (menos CSRF y el correo) al inicio
+    function toggleEditable(editable) {
+      const controls = form.querySelectorAll("input, select, textarea");
+
+      controls.forEach(el => {
+        if (el.name === "csrfmiddlewaretoken") return;
+        if (el.id === "email-readonly") return;
+        // Si algún día quieres bloquear un campo específico, puedes marcarlo con data-locked="1"
+        if (el.dataset.locked === "1") return;
+
+        el.disabled = !editable;
+      });
+    }
+
+    // Estado inicial: solo lectura
+    toggleEditable(false);
+
+    // Activar modo edición
+    editBtn.addEventListener("click", function () {
+      toggleEditable(true);
+      editBtn.classList.add("d-none");
+      saveBtn.classList.remove("d-none");
+      cancelBtn.classList.remove("d-none");
+    });
+
+    // Cancelar cambios
+    cancelBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      form.reset();          // vuelve a los valores originales
+      toggleEditable(false); // bloquea otra vez
+      saveBtn.classList.add("d-none");
+      cancelBtn.classList.add("d-none");
+      editBtn.classList.remove("d-none");
+    });
+  });
+</script>
 {% endblock %}

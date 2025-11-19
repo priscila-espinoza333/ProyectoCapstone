@@ -47,9 +47,17 @@ urlpatterns = [
     path("signup/", views.signup, name="signup"),
     path("cuenta/perfil/", views.perfil, name="perfil"),              # <- ESTA línea resuelve el NoReverseMatch
     path("cuenta/enviar-reset/", views.enviar_link_reset, name="enviar_link_reset"),
+    path("activar/<uidb64>/<token>/", views.activar_cuenta, name="activar_cuenta"),
+
 
 
     path("carrito/pago-dummy/<int:carrito_id>/", 
         views_cart.dummy_pagar_carrito, 
         name="dummy_pagar_carrito"),
+
+    # Botonera
+    path("pagos/seleccionar/<int:carrito_id>/", views.pagos_seleccionar, name="pagos_seleccionar"),
+
+    
+
 ]

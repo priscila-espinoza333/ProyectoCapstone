@@ -1,46 +1,29 @@
 # core/templatetags/cart_tags.py
 from django import template
-from core.models import Carrito  # ajusta si está en otro módulo
+from core.views_cart import _get_or_create_carrito  # 👈 IMPORTAMOS DESDE views_cart
 
 register = template.Library()
 
 @register.inclusion_tag("core/partials/_mini_cart_dropdown.html", takes_context=True)
 def mini_cart_dropdown(context, limit=3):
-    """
-    Renderiza el ícono + dropdown del mini carrito.
-    Usa el carrito ABIERTO (pagado=False) del usuario autenticado.
-    """
-    request = context.get("request")
+    request = context["request"]
+
     user = getattr(request, "user", None)
+    if user is None or not user.is_authenticated:
+        # No mostrar nada si no hay usuario logueado
+        return {}
 
-    carrito = None
-    items = []
-    total = 0
-    count = 0
+    # Usamos la MISMA lógica que en las vistas
+    carrito = _get_or_create_carrito(user)
 
-    if user and user.is_authenticated:
-        carrito = (
-            Carrito.objects
-            .filter(usuario=user, pagado=False)   # <--- AQUÍ: pagado, no pagada
-            .order_by("-id")
-            .first()
-        )
-        if carrito:
-            # related_name = 'reservas' en tu modelo Carrito
-            qs = carrito.reservas.select_related("cancha").all()
-            count = qs.count()
-            items = list(qs[:limit])
-
-            total = (
-                carrito.obtener_total() if hasattr(carrito, "obtener_total")
-                else getattr(carrito, "total", 0)
-            ) or 0
+    # Traemos reservas del carrito
+    reservas_qs = carrito.reservas.select_related("cancha").order_by("-creado_en")
+    items = list(reservas_qs[:limit])
+    cart_count = reservas_qs.count()
+    subtotal = sum(r.precio for r in reservas_qs)
 
     return {
-        "carrito": carrito,
-        "cart_items": items,
-        "cart_count": count,
-        "cart_total": total,
-        "request": request,
-        "limit": limit,
+        "items": items,
+        "cart_count": cart_count,
+        "subtotal": subtotal,
     }

@@ -1,72 +1,83 @@
 {# core/templates/core/partials/_mini_cart_dropdown.html #}
-{% url 'core:ver_carrito' as url_carrito %}{% if not url_carrito %}{% url 'ver_carrito' as url_carrito %}{% endif %}
-{% url 'core:checkout' as url_checkout %}{% if not url_checkout %}{% url 'checkout' as url_checkout %}{% endif %}
+
+{% load static %}
 
 <li class="nav-item dropdown position-relative me-2">
+
+  <!-- ICONO DEL CARRITO -->
   <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="miniCartMenu"
      role="button" data-bs-toggle="dropdown" aria-expanded="false">
+
     <i class="bi bi-cart3 fs-5"></i>
-    {% if cart_count and cart_count > 0 %}
+
+    {% if cart_count > 0 %}
       <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
         {{ cart_count }}
       </span>
     {% endif %}
   </a>
 
-  <div class="dropdown-menu dropdown-menu-end p-0 shadow" aria-labelledby="miniCartMenu" style="min-width: 320px;">
-    <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
-      <strong>Tu carrito</strong>
-      <small class="text-muted">{{ cart_count }} ítem{{ cart_count|pluralize:"s" }}</small>
+  <!-- CONTENIDO DEL DROPDOWN -->
+  <div class="dropdown-menu dropdown-menu-end p-0 shadow-lg" aria-labelledby="miniCartMenu"
+       style="min-width: 340px; border-radius: 10px; overflow:hidden;">
+
+    <!-- HEADER -->
+    <div class="p-3 bg-dark text-white d-flex justify-content-between align-items-center">
+      <strong>🛒 Mi carrito</strong>
+      <small class="text-light-50">{{ cart_count }} item{{ cart_count|pluralize:"s" }}</small>
     </div>
 
     {% if items %}
+      <!-- LISTA DE ITEMS -->
       <ul class="list-group list-group-flush">
         {% for it in items %}
           <li class="list-group-item d-flex justify-content-between align-items-start">
+
+            <!-- INFO -->
             <div class="me-2">
-              <div class="fw-semibold">
-                {{ it.cancha|default:"Cancha" }}
-              </div>
+              <div class="fw-semibold">{{ it.cancha }}</div>
+
               <div class="small text-muted">
-                {% if it.hora_inicio %}{{ it.hora_inicio }}{% endif %}
-                {% if it.hora_fin %}–{{ it.hora_fin }}{% endif %}
-                {% if it.creado_en %} · {{ it.creado_en|date:"d/m/Y H:i" }}{% endif %}
+                {{ it.hora_inicio|date:"d-m H:i" }} – {{ it.hora_fin|date:"H:i" }}
               </div>
             </div>
-            <div class="text-end">
-              <div class="fw-semibold">${{ it.precio|floatformat:0 }}</div>
+
+            <!-- PRECIO -->
+            <div class="text-end fw-bold text-success">
+              ${{ it.precio|floatformat:0 }}
             </div>
           </li>
         {% endfor %}
       </ul>
 
-      <div class="p-3 border-top">
-        <div class="d-flex justify-content-between mb-2">
-          <span class="fw-semibold">Subtotal ({{ items|length }} mostrados)</span>
+      <!-- SUBTOTAL -->
+      <div class="p-3 bg-light border-top">
+        <div class="d-flex justify-content-between mb-3">
+          <strong>Subtotal</strong>
           <span class="fw-bold">${{ subtotal|floatformat:0 }}</span>
         </div>
+
+        <!-- BOTONES -->
         <div class="d-flex gap-2">
-          <a class="btn btn-sm btn-outline-secondary w-50" href="{{ url_carrito|default:'#' }}">
+          
+          <!-- VER CARRITO -->
+          <a class="btn btn-sm btn-outline-secondary w-50" 
+             href="{% url 'ver_carrito' %}">
             Ver carrito
           </a>
-          {% if url_checkout %}
-            <a class="btn btn-sm btn-primary w-50" href="{{ url_checkout }}">
-              Ir a pagar
-            </a>
-          {% else %}
-            <a class="btn btn-sm btn-primary w-50 disabled" href="#" aria-disabled="true">
-              Ir a pagar
-            </a>
-          {% endif %}
         </div>
       </div>
+
     {% else %}
-      <div class="p-3">
-        <div class="text-muted">Tu carrito está vacío.</div>
-        <a class="btn btn-sm btn-primary mt-2 w-100" href="{{ url_carrito|default:'#' }}">
+      <!-- CARRITO VACÍO -->
+      <div class="p-4 text-center">
+        <p class="text-muted mb-2">Tu carrito está vacío.</p>
+        <a class="btn btn-sm btn-primary w-100" href="{% url 'ver_carrito' %}">
           Ver carrito
         </a>
       </div>
     {% endif %}
+
   </div>
+
 </li>

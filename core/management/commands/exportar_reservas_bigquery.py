@@ -1,58 +1,130 @@
-import pandas as pd
-from decimal import Decimal
-from django.core.management.base import BaseCommand
-from django.utils.timezone import localtime
-from core.models import Reserva
+import os
+import psycopg2
+from dotenv import load_dotenv
 from google.cloud import bigquery
+from django.core.management.base import BaseCommand
+from datetime import datetime
 
 class Command(BaseCommand):
-    help = "Exporta la tabla Reserva directamente a BigQuery desde Django."
+    help = "Exporta datos de core_reserva desde PostgreSQL a BigQuery (reservas_raw) usando LOAD + WRITE_TRUNCATE"
 
-    def add_arguments(self, parser):
-        parser.add_argument("--project", required=True, help="ID del proyecto GCP, ej: matchplay-bi")
-        parser.add_argument("--dataset", required=True, help="Dataset destino en BigQuery, ej: matchplay_data")
-        parser.add_argument("--table", default="reservas", help="Nombre de la tabla destino (default: reservas)")
-        parser.add_argument("--truncate", action="store_true", help="Sobrescribe la tabla en BigQuery (WRITE_TRUNCATE)")
+    def handle(self, *args, **options):
+        load_dotenv()
 
-    def handle(self, *args, **opts):
-        project = opts["project"]
-        dataset = opts["dataset"]
-        table = opts["table"]
-        truncate = opts["truncate"]
+        # --- Conexión a PostgreSQL ---
+        pg_conn = psycopg2.connect(
+            host=os.getenv("PG_HOST"),
+            port=os.getenv("PG_PORT"),
+            dbname=os.getenv("PG_DB"),
+            user=os.getenv("PG_USER"),
+            password=os.getenv("PG_PASSWORD"),
+        )
+        pg_cursor = pg_conn.cursor()
+        tabla_reserva = os.getenv("PG_RESERVA_TABLE", "core_reserva")
 
-        self.stdout.write(f"🔄 Exportando reservas → BigQuery ({project}.{dataset}.{table})...")
+        self.stdout.write(self.style.NOTICE(f"Leyendo datos desde PostgreSQL: tabla {tabla_reserva}"))
 
-        # Obtener los datos desde el modelo
-        qs = Reserva.objects.only("fecha_hora_inicio", "fecha_hora_fin", "precio_total", "estado")
-        if not qs.exists():
-            self.stdout.write(self.style.WARNING("⚠️ No hay registros de Reserva para exportar."))
-            return
+        pg_cursor.execute(f"""
+            SELECT
+                id,
+                estado,
+                creado_en,
+                cancha_id,
+                usuario_id,
+                actualizado_en,
+                email_contacto,
+                fecha_hora_fin,
+                fecha_hora_inicio,
+                nombre_contacto,
+                precio_total,
+                telefono_contacto
+            FROM {tabla_reserva};
+        """)
+        rows = pg_cursor.fetchall()
 
-        data = []
-        for r in qs.iterator(chunk_size=1000):
-            data.append({
-                "fecha_hora_inicio": localtime(r.fecha_hora_inicio).isoformat(sep=" "),
-                "fecha_hora_fin": localtime(r.fecha_hora_fin).isoformat(sep=" "),
-                "precio_total": str(r.precio_total) if isinstance(r.precio_total, Decimal) else r.precio_total,
-                "estado": r.estado,
-            })
+        # Preparar filas para BigQuery
+        
 
-        df = pd.DataFrame(data)
+        def to_iso(dt):
+            if dt is None:
+                return None
+            if isinstance(dt, datetime):
+                return dt.isoformat()
+            return dt
 
-        # Cliente BigQuery
-        client = bigquery.Client(project=project)
-        table_id = f"{project}.{dataset}.{table}"
+        bq_rows = [
+            {
+                "id": r[0],
+                "estado": r[1],
+                "creado_en": to_iso(r[2]),
+                "cancha_id": r[3],
+                "usuario_id": r[4],
+                "actualizado_en": to_iso(r[5]),
+                "email_contacto": r[6],
+                "fecha_hora_fin": to_iso(r[7]),
+                "fecha_hora_inicio": to_iso(r[8]),
+                "nombre_contacto": r[9],
+                "precio_total": float(r[10]) if r[10] is not None else 0.0,
+                "telefono_contacto": r[11],
+            }
+            for r in rows
+        ]
+
+
+        # --- Configuración BigQuery ---
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+
+        project_id = os.getenv("GCP_PROJECT_ID")
+        dataset_id = os.getenv("GCP_BQ_DATASET")
+        table_name = os.getenv("GCP_BQ_TABLE")
+        table_id = f"{project_id}.{dataset_id}.{table_name}"
+
+        client = bigquery.Client(project=project_id)
+
+        schema = [
+            bigquery.SchemaField("id", "INT64", mode="REQUIRED"),
+            bigquery.SchemaField("estado", "STRING"),
+            bigquery.SchemaField("creado_en", "TIMESTAMP"),
+            bigquery.SchemaField("cancha_id", "INT64"),
+            bigquery.SchemaField("usuario_id", "INT64"),
+            bigquery.SchemaField("actualizado_en", "TIMESTAMP"),
+            bigquery.SchemaField("email_contacto", "STRING"),
+            bigquery.SchemaField("fecha_hora_fin", "TIMESTAMP"),
+            bigquery.SchemaField("fecha_hora_inicio", "TIMESTAMP"),
+            bigquery.SchemaField("nombre_contacto", "STRING"),
+            bigquery.SchemaField("precio_total", "NUMERIC"),
+            bigquery.SchemaField("telefono_contacto", "STRING"),
+        ]
+
+        # Crear tabla si no existe
+        try:
+            client.get_table(table_id)
+            self.stdout.write(self.style.SUCCESS(f"La tabla {table_id} ya existe."))
+        except Exception:
+            table = bigquery.Table(table_id, schema=schema)
+            client.create_table(table)
+            self.stdout.write(self.style.SUCCESS(f"Tabla creada en BigQuery: {table_id}"))
+
+        # Cargar datos con LOAD JOB + WRITE_TRUNCATE (sin DELETE, sin INSERT DML)
+        self.stdout.write(self.style.NOTICE(
+            f"Cargando {len(bq_rows)} filas en {table_id} con WRITE_TRUNCATE..."
+        ))
 
         job_config = bigquery.LoadJobConfig(
-            write_disposition=(
-                bigquery.WriteDisposition.WRITE_TRUNCATE
-                if truncate else bigquery.WriteDisposition.WRITE_APPEND
-            ),
+            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
         )
 
-        # Subida de datos
-        job = client.load_table_from_dataframe(df, table_id, job_config=job_config)
-        job.result()
+        load_job = client.load_table_from_json(
+            bq_rows,
+            table_id,
+            job_config=job_config,
+        )
 
-        table_obj = client.get_table(table_id)
-        self.stdout.write(self.style.SUCCESS(f"✅ Carga completada: {table_obj.num_rows} filas en {table_id}"))
+        load_job.result()  # Esperar a que termine
+
+        self.stdout.write(self.style.SUCCESS(
+            f"Carga completada. Filas cargadas: {len(bq_rows)}"
+        ))
+
+        pg_cursor.close()
+        pg_conn.close()

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Activa tu cuenta en MatchPlay</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: #f4f4f5;
+      margin: 0;
+      padding: 0;
+    }
+    .email-wrapper {
+      width: 100%;
+      background-color: #f4f4f5;
+      padding: 24px 0;
+    }
+    .email-container {
+      max-width: 640px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    }
+    .email-header {
+      background: linear-gradient(135deg, #111827, #1f2937);
+      color: #f9fafb;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .brand span:nth-child(1) { color: #facc15; } /* MATCH */
+    .brand span:nth-child(2) { color: #22c55e; } /* PLAY */
+    .email-header small {
+      font-size: 12px;
+      opacity: 0.85;
+    }
+    .email-body {
+      padding: 24px;
+      color: #111827;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 16px 0 10px;
+    }
+    .btn-primary {
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #f9fafb !important;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      margin: 16px 0;
+    }
+    .btn-primary:hover {
+      filter: brightness(1.05);
+    }
+    .muted {
+      color: #6b7280;
+      font-size: 12px;
+    }
+    .email-footer {
+      padding: 16px 24px 20px;
+      font-size: 11px;
+      color: #6b7280;
+      border-top: 1px solid #e5e7eb;
+      background-color: #f9fafb;
+      text-align: center;
+    }
+    .code-box {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background-color: #f3f4f6;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      word-break: break-all;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="email-container">
+
+      <div class="email-header">
+        <div class="brand">
+          <span>MATCH</span><span>PLAY</span>
+        </div>
+        <small>Activación de cuenta</small>
+      </div>
+
+      <div class="email-body">
+        <p>Hola{% if user.first_name %} {{ user.first_name }}{% else %} {{ user.username }}{% endif %},</p>
+
+        <p>
+          ¡Gracias por registrarte en <strong>MatchPlay</strong>! 🎉  
+          Antes de poder iniciar sesión, necesitamos que <strong>confirmes tu correo electrónico</strong>.
+        </p>
+
+        <h3 class="section-title">Activa tu cuenta</h3>
+
+        <p>
+          Haz clic en el siguiente botón para activar tu cuenta y empezar a reservar tus canchas:
+        </p>
+
+        <p style="text-align:center;">
+          <a href="{{ activation_link }}" class="btn-primary">Activar mi cuenta</a>
+        </p>
+
+        <p class="muted">
+          Si el botón no funciona, también puedes copiar y pegar este enlace en tu navegador:
+        </p>
+        <div class="code-box">
+          {{ activation_link }}
+        </div>
+
+        <p class="muted" style="margin-top:16px;">
+          Si tú no creaste esta cuenta, puedes ignorar este correo y no se realizará ningún cambio.
+        </p>
+      </div>
+
+      <div class="email-footer">
+        <div>© {{ year }} MatchPlay. Todos los derechos reservados.</div>
+        {% if soporte_email %}
+          <div>Soporte: {{ soporte_email }}</div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

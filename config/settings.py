@@ -3,9 +3,12 @@ Django settings for config project.
 """
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
 # --- Paths ---
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
 
 # --- Seguridad y entorno ---
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-only-not-for-prod")
@@ -20,6 +23,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Habilitar filtros como intcomma
+    'django.contrib.humanize',
     # Apps del proyecto
     "core",
     "users",
@@ -130,18 +135,25 @@ SESSION_TIMEOUT_REDIRECT = '/login/'
 
 # --- Email ---
 # Para desarrollo, usa consola (no envía correos, imprime en terminal)
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND",
-    "django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend",
-)
+#EMAIL_BACKEND = os.getenv(
+#    "EMAIL_BACKEND",
+#    "django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend",
+#)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-# Config SMTP solo si no usas consola (produce errores si no hay credenciales)
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST = os.getenv("EMAIL_HOST")                 # ej: smtp.gmail.com
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))     # 587 = TLS
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "1") == "1"
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no-reply@matchplay.local")
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "0") == "1"
+
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")       # correo completo
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+
+# Emisor por defecto
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL",
+    EMAIL_HOST_USER  # Si no defines otro, usa el mismo correo
+)
 
 # --- Datos de contacto públicos (para vistas/páginas) ---
 CONTACT_EMAIL_TO = os.getenv("CONTACT_EMAIL_TO", EMAIL_HOST_USER or "contacto@ejemplo.cl")
@@ -174,7 +186,7 @@ TBK_API_KEY = "579B532A7440BB0C"     # sandbox oficial Webpay Plus
 
 ##MERCADO PAG
 MERCADOPAGO_ACCESS_TOKEN = os.getenv("MERCADOPAGO_ACCESS_TOKEN_TEST", "APP_USR-4405580064406280-111214-d83f062de946609bcdaaf6076cf10632-2985296633")  # <-- PON AQUÍ TU TOKEN TEST
-MERCADOPAGO_TEST_BUYER_EMAIL = "TESTUSER2040431325542184435@testuser.com"   # comprador (payer)
+MERCADOPAGO_TEST_BUYER_EMAIL = "montesluis984@gmail.com"   # comprador (payer)
 MERCADOPAGO_TEST_SELLER_EMAIL = "TESTUSER2518639870572899821@testuser.com" 
 
 MERCADOPAGO_SUCCESS_URL = "http://127.0.0.1:8000/pagos/mp/success/"
@@ -182,15 +194,7 @@ MERCADOPAGO_FAILURE_URL = "http://127.0.0.1:8000/pagos/mp/failure/"
 MERCADOPAGO_PENDING_URL = "http://127.0.0.1:8000/pagos/mp/pending/"
 MERCADOPAGO_WEBHOOK_URL = "http://127.0.0.1:8000/pagos/mp/webhook/"
 
-   
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('recintodeportivomatchplay@gmail.com')
-EMAIL_HOST_PASSWORD = os.getenv('Admin.1234')
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 #SendGrid API Key
 
@@ -205,9 +209,12 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 CSRF_FAILURE_VIEW = "core.views_errors.csrf_failure"
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
 
 
 # Aumentar límite de campos que acepta Django en un POST
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000  # o 10000 si quieres ir sobrado
+LOGIN_REDIRECT_URL = "post_login_redirect"
+
+
 

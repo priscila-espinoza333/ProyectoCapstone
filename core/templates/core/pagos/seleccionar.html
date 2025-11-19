@@ -1,0 +1,70 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Selecciona método de pago{% endblock %}
+
+{% block content %}
+
+<div class="container py-5" style="max-width:600px">
+
+    <h2 class="text-center mb-2">Selecciona tu método de pago</h2>
+
+    <div class="text-center mb-4">
+        <span class="badge rounded-pill bg-success text-light">
+            🔒 Pago 100% seguro
+        </span>
+    </div>
+
+    <!-- Total -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body text-center">
+            <p class="text-muted mb-2">Total a pagar:</p>
+            <h3 class="fw-bold text-success">${{ carrito.total|floatformat:0 }}</h3>
+        </div>
+    </div>
+
+    <!-- Mercado Pago -->
+    <a href="{% url 'mp_iniciar_pago' carrito.id %}"
+       class="btn btn-outline-primary w-100 mb-3 d-flex align-items-center justify-content-center gap-2 py-2">
+
+        <img src="{% static 'core/img/mp-logo.png' %}"
+             alt="Mercado Pago"
+             style="height:30px; width:auto; display:block;">
+
+        <span>Pagar con Mercado Pago</span>
+    </a>
+
+    <!-- Webpay -->
+    <a href="{% url 'tbk_iniciar_pago' carrito.id %}"
+       class="btn btn-primary w-100 mb-3 d-flex align-items-center justify-content-center gap-2 py-2">
+
+        <img src="{% static 'core/img/webpay-logo.png' %}"
+             alt="Webpay"
+             style="height:30px; width:auto; display:block;">
+
+        <span>Pagar con Webpay</span>
+    </a>
+
+    <!-- Modo Prueba -->
+    <a href="{% url 'dummy_pagar_carrito' carrito.id %}"
+       class="btn btn-success w-100 mb-3 d-flex align-items-center justify-content-center gap-2 py-2">
+
+        <i class="bi bi-check-circle"></i>
+        <span>Pagar (Modo Prueba)</span>
+    </a>
+
+    <p class="text-muted small mt-3">
+        Recomendación: si estás en Chile y quieres pagar con tarjeta de débito o crédito,
+        Webpay suele ser la opción más directa.  
+        Si ya usas Mercado Pago o tienes saldo en la app, Mercado Pago te dará un checkout más rápido.
+    </p>
+
+    <div class="text-center mt-3">
+        <a href="{% url 'ver_carrito' %}" class="text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Volver al carrito
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

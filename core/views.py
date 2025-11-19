@@ -11,12 +11,20 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Count, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
+from django.contrib.auth import get_user_model
+from calendar import monthrange
+from datetime import date 
+
+
 
 from core.forms import ReservaForm
 from core.models import Cancha, Reserva, ReservaTemporal
@@ -26,7 +34,7 @@ from users.forms import SignUpForm, ProfileForm
 from django.core.mail import EmailMultiAlternatives
 from transbank.webpay.webpay_plus.transaction import Transaction
 from datetime import datetime, timedelta
-from .models import ReservaTemporal
+from .models import Carrito, ReservaTemporal
 # -----------------------------
 # PÁGINAS EXISTENTES
 # -----------------------------
@@ -404,7 +412,128 @@ def mis_reservas(request):
 # ------------------------------------------------------------
 @solo_admin_recinto
 def panel_admin(request):
-    return render(request, "core/panel_admin.html")
+    hoy = timezone.localdate()
+    ahora = timezone.now()
+
+    # --- KPIs de reservas ---
+    # 1) Reservas que se JUEGAN hoy (pendientes o confirmadas)
+    reservas_hoy = Reserva.objects.filter(
+        fecha_hora_inicio__date=hoy,
+        estado__in=[Reserva.Estado.PENDIENTE, Reserva.Estado.CONFIRMADA],
+    ).count()
+
+    # 2) Reservas CREADAS hoy
+    reservas_creadas_hoy = Reserva.objects.filter(
+        creado_en__date=hoy
+    ).count()
+
+    # 3) Reservas próximas (siguientes 7 días)
+    en_7_dias = hoy + timedelta(days=7)
+    reservas_proximas_7 = Reserva.objects.filter(
+        fecha_hora_inicio__date__gte=hoy,
+        fecha_hora_inicio__date__lte=en_7_dias,
+        estado__in=[Reserva.Estado.PENDIENTE, Reserva.Estado.CONFIRMADA],
+    ).count()
+
+    total_canchas = Cancha.objects.filter(activa=True).count()
+
+    UserModel = get_user_model()
+    usuarios_activos = UserModel.objects.filter(is_active=True).count()
+
+    # --- Ingresos por periodos ---
+    base_ingresos = Reserva.objects.filter(
+        estado=Reserva.Estado.CONFIRMADA
+    )
+
+    # 🔹 Ingresos últimos 7 días (ventana móvil)
+    hace_7_dias = hoy - timedelta(days=7)
+    ingresos_7d = (
+        base_ingresos.filter(
+            fecha_hora_inicio__date__gte=hace_7_dias,
+            fecha_hora_inicio__date__lte=hoy,
+        ).aggregate(total=Sum("precio_total"))["total"]
+        or 0
+    )
+
+    # 🔹 Mes actual (1 al último día del mes)
+    year = hoy.year
+    month = hoy.month
+    start_mes_actual = date(year, month, 1)
+    last_day_mes_actual = monthrange(year, month)[1]
+    end_mes_actual = date(year, month, last_day_mes_actual)
+
+    ingresos_mes_actual = (
+        base_ingresos.filter(
+            fecha_hora_inicio__date__gte=start_mes_actual,
+            fecha_hora_inicio__date__lte=end_mes_actual,
+        ).aggregate(total=Sum("precio_total"))["total"]
+        or 0
+    )
+
+    # 🔹 Mes anterior (1 al último día del mes anterior)
+    if month == 1:
+        prev_year = year - 1
+        prev_month = 12
+    else:
+        prev_year = year
+        prev_month = month - 1
+
+    start_mes_anterior = date(prev_year, prev_month, 1)
+    last_day_mes_anterior = monthrange(prev_year, prev_month)[1]
+    end_mes_anterior = date(prev_year, prev_month, last_day_mes_anterior)
+
+    ingresos_mes_anterior = (
+        base_ingresos.filter(
+            fecha_hora_inicio__date__gte=start_mes_anterior,
+            fecha_hora_inicio__date__lte=end_mes_anterior,
+        ).aggregate(total=Sum("precio_total"))["total"]
+        or 0
+    )
+
+    # 🔹 Semestre actual (6 meses)
+    # 1° semestre: 1 Ene – 30 Jun
+    # 2° semestre: 1 Jul – 31 Dic
+    if month <= 6:
+        start_semestre = date(year, 1, 1)
+        end_semestre = date(year, 6, 30)
+    else:
+        start_semestre = date(year, 7, 1)
+        end_semestre = date(year, 12, 31)
+
+    ingresos_semestre = (
+        base_ingresos.filter(
+            fecha_hora_inicio__date__gte=start_semestre,
+            fecha_hora_inicio__date__lte=end_semestre,
+        ).aggregate(total=Sum("precio_total"))["total"]
+        or 0
+    )
+
+    contexto = {
+        # KPIs reservas
+        "reservas_hoy": reservas_hoy,
+        "reservas_creadas_hoy": reservas_creadas_hoy,
+        "reservas_proximas_7": reservas_proximas_7,
+        "total_canchas": total_canchas,
+        "usuarios_activos": usuarios_activos,
+
+        # Ingresos
+        "ingresos_7d": ingresos_7d,
+        "ingresos_mes_actual": ingresos_mes_actual,
+        "ingresos_mes_anterior": ingresos_mes_anterior,
+        "ingresos_semestre": ingresos_semestre,
+
+        # Fechas de referencia para mostrar en el template
+        "hoy": hoy,
+        "start_mes_actual": start_mes_actual,
+        "end_mes_actual": end_mes_actual,
+        "start_mes_anterior": start_mes_anterior,
+        "end_mes_anterior": end_mes_anterior,
+        "start_semestre": start_semestre,
+        "end_semestre": end_semestre,
+    }
+    return render(request, "core/panel_admin.html", contexto)
+
+
 
 
 @require_http_methods(["GET", "POST"])
@@ -415,16 +544,37 @@ def signup(request):
     if request.method == "POST":
         form = SignUpForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            auth_login(request, user)
-            messages.success(request, "¡Cuenta creada! Bienvenid@ 👋")
-            return redirect("mis_reservas")
+
+            # Crear usuario inactivo
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
+
+            # Enviar correo de verificación
+            _enviar_correo_verificacion(request, user)
+
+            messages.success(
+                request,
+                "Tu cuenta ha sido creada. Te enviamos un correo para activarla 🔐."
+            )
+            return redirect("login")
+
         messages.error(request, "Por favor corrige los errores del formulario.")
     else:
         form = SignUpForm()
 
     return render(request, "core/auth/signup.html", {"form": form})
 
+@login_required
+def post_login_redirect(request):
+    user = request.user
+
+    # Si es administrador de recinto → panel admin
+    if getattr(user, "rol", "") == "ADMIN_RECINTO":
+        return redirect("panel_admin")
+
+    # Usuarios normales → mis reservas    
+    return redirect("mis_reservas")
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -469,7 +619,7 @@ def enviar_link_reset(request):
             html_email_template_name="core/auth/emails/password_reset_email.html",
             subject_template_name="core/auth/emails/password_reset_subject.txt",
         )
-        messages.success(request, "📩 Te enviamos un enlace para cambiar tu contraseña.")
+        messages.success(request, "Te enviamos un enlace para cambiar tu contraseña.")
         return redirect("perfil")
 
     messages.error(request, "No se pudo enviar el correo. Revisa tu email.")
@@ -478,3 +628,52 @@ def enviar_link_reset(request):
 @staff_member_required
 def bi_dashboard(request):
     return render(request, "admin/bi_dashboard.html")
+
+@login_required
+def pagos_seleccionar(request, carrito_id):
+    carrito = get_object_or_404(Carrito, id=carrito_id, usuario=request.user)
+    return render(request, "core/pagos/seleccionar.html", {"carrito": carrito})
+
+
+## Funcion auxiliar para envio de correo de confirmacion
+
+def _enviar_correo_verificacion(request, user):
+    token = default_token_generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+    activation_link = request.build_absolute_uri(
+        reverse("activar_cuenta", kwargs={"uidb64": uid, "token": token})
+    )
+
+    subject = "Activa tu cuenta en MatchPlay"
+    message = f"""
+                Hola {user.first_name or user.username},
+
+                Gracias por registrarte en MatchPlay ⚽🏆
+
+                Para activar tu cuenta, haz clic en el siguiente enlace:
+
+                {activation_link}
+
+                Si no creaste esta cuenta, puedes ignorar este mensaje.
+                """
+
+    user.email_user(subject, message)
+
+UserModel = get_user_model()
+def activar_cuenta(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = UserModel.objects.get(pk=uid)
+    except Exception:
+        user = None
+
+    if user and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+
+        messages.success(request, "Tu cuenta ha sido verificada. Ahora puedes iniciar sesión 🎉")
+        return redirect("login")
+
+    messages.error(request, "El enlace de activación no es válido o ya fue usado.")
+    return redirect("login")
