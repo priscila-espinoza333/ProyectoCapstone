@@ -62,17 +62,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "matchplay",
-        "USER": "app_user",
-        "PASSWORD": "SafePass2025!",
-        "HOST": "127.0.0.1",
-        "PORT": "5432",
-        "CONN_MAX_AGE": 60,
+DB_ENGINE = os.getenv("DB_ENGINE", "sqlite")
+
+if DB_ENGINE == "postgres":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("PG_DB"),
+            "USER": os.getenv("PG_USER"),
+            "PASSWORD": os.getenv("PG_PASSWORD"),
+            "HOST": os.getenv("PG_HOST"),
+            "PORT": os.getenv("PG_PORT"),
+            "CONN_MAX_AGE": 60,
+        }
     }
-}
+else:
+    # SQLite por defecto
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # ============================
 #   CONFIGURACIÓN DE SESIONES
